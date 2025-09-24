@@ -1,0 +1,43 @@
+# Ignore all markdown files except README.md
+*.md
+!README.md
+
+# Ignore notes folder for critical and performance documentation
+notes/
+
+# WordPress specific ignores
+wp-config.php
+wp-content/uploads/
+wp-content/blogs.dir/
+wp-content/upgrade/
+wp-content/backup-db/
+wp-content/advanced-cache.php
+wp-content/wp-cache-config.php
+wp-content/cache/
+wp-content/cache/supercache/
+
+# Plugin development ignores
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.temp
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Temporary files
+*.tmp
+*.temp
