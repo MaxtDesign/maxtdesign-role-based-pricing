@@ -54,6 +54,22 @@ class MaxT_Role_Based_Pricing {
     private static $instance = null;
 
     /**
+     * In-memory storage for original prices during request lifecycle
+     * PERFORMANCE FIX: Replaces database meta storage to eliminate DB writes
+     *
+     * @var array
+     */
+    private static $original_prices = array();
+
+    /**
+     * Flag to track if user has discounts applied during request
+     * PERFORMANCE FIX: Enables early return in display methods
+     *
+     * @var bool
+     */
+    private static $user_has_discounts = false;
+
+    /**
      * Core instance
      *
      * @var MaxT_RBP_Core
@@ -149,23 +165,25 @@ class MaxT_Role_Based_Pricing {
 
     /**
      * Initialize smart hook loading with conditional registration
-     * IMPROVED: Added comprehensive error handling and clarified hook priority logic
+     * ARCHITECTURAL FIX: Single calculation path with unified display logic
      */
     private function init_smart_hooks() {
         try {
-            // Always register hooks but with higher priority and early returns
-            // This ensures compatibility while optimizing performance
-            
+            // Single calculation path - only modify actual prices, not regular prices
             // Use priority 50 to run after most plugins but before final output
-            // This allows other plugins to modify prices first, then we apply role-based discounts
             $hook_priority = 50;
             
+            // Price modification hooks - these handle the actual price calculation
             add_filter('woocommerce_product_get_price', array($this, 'get_role_based_price'), $hook_priority, 2);
-            add_filter('woocommerce_product_get_regular_price', array($this, 'get_role_based_regular_price'), $hook_priority, 2);
-            add_filter('woocommerce_product_get_sale_price', array($this, 'get_role_based_sale_price'), $hook_priority, 2);
             add_filter('woocommerce_product_variation_get_price', array($this, 'get_role_based_price'), $hook_priority, 2);
+            
+            // Regular price hooks - return original price unchanged for display purposes
+            add_filter('woocommerce_product_get_regular_price', array($this, 'get_role_based_regular_price'), $hook_priority, 2);
             add_filter('woocommerce_product_variation_get_regular_price', array($this, 'get_role_based_regular_price'), $hook_priority, 2);
-            add_filter('woocommerce_product_variation_get_sale_price', array($this, 'get_role_based_sale_price'), $hook_priority, 2);
+            
+            // Unified display logic - single filter for all price HTML formatting
+            add_filter('woocommerce_get_price_html', array($this, 'format_role_based_price_html'), $hook_priority, 2);
+            add_filter('woocommerce_available_variation', array($this, 'format_variation_price_html'), $hook_priority, 3);
             
             // Add performance monitoring hooks if enabled
             if (defined('MAXT_RBP_PERFORMANCE_MONITORING') && MAXT_RBP_PERFORMANCE_MONITORING) {
@@ -250,7 +268,7 @@ class MaxT_Role_Based_Pricing {
 
     /**
      * Get role-based price
-     * IMPROVED: Added comprehensive error handling to ensure pricing never breaks
+     * PERFORMANCE FIX: In-memory storage eliminates database writes during price calculation
      */
     public function get_role_based_price($price, $product) {
         try {
@@ -282,10 +300,16 @@ class MaxT_Role_Based_Pricing {
             // Calculate role-based price
             $role_price = $this->core->calculate_price($price, $product);
             
-            // If we have a discount, return the discounted price
+            // If we have a discount, store original price in memory and return discounted price
             if ($role_price && $role_price < $price) {
+                // Store original price in static array for display purposes
+                self::$original_prices[$product->get_id()] = $price;
+                self::$user_has_discounts = true;
                 return $role_price;
             }
+            
+            // No discount applies - ensure no stale data in memory
+            unset(self::$original_prices[$product->get_id()]);
             
             return $price;
             
@@ -301,65 +325,145 @@ class MaxT_Role_Based_Pricing {
     }
 
     /**
-     * Get role-based regular price - keep original price for strikethrough display
+     * Get role-based regular price - always return original price unchanged
+     * ARCHITECTURAL FIX: Removed global flag hack, simplified to always return original
      */
     public function get_role_based_regular_price($price, $product) {
-        // Always return the original regular price to maintain strikethrough display
+        // Always return the original regular price unchanged
+        // This ensures WooCommerce can display original prices with strikethrough
         return $price;
     }
 
     /**
-     * Get role-based sale price - set discounted price as sale price
-     * IMPROVED: Added comprehensive error handling to ensure pricing never breaks
+     * Format role-based price HTML with strikethrough for discounted prices
+     * PERFORMANCE FIX: Uses in-memory storage instead of database reads
      */
-    public function get_role_based_sale_price($price, $product) {
+    public function format_role_based_price_html($price_html, $product) {
         try {
-            if (!$this->core) {
-                return $price;
+            if (!$product || !$this->core) {
+                return $price_html;
             }
             
-            // Only modify sale price if user is logged in and has a role
+            // Early return if no discounts have been applied during this request
+            if (!self::$user_has_discounts) {
+                return $price_html;
+            }
+            
+            // Only apply to logged-in users with pricing rules
             if (!is_user_logged_in()) {
-                return $price;
+                return $price_html;
             }
             
-            // Cache user's pricing rules status to avoid repeated database queries
             $user_has_pricing_rules = $this->get_user_pricing_rules_status();
             if (!$user_has_pricing_rules) {
-                return $price;
+                return $price_html;
             }
             
-            $user_role = $this->get_current_user_role();
-            if (!$user_role) {
-                return $price;
+            // Get original price from in-memory storage
+            $product_id = $product->get_id();
+            if (!isset(self::$original_prices[$product_id])) {
+                return $price_html;
             }
             
-            // Get the regular price using proper getter method
-            $regular_price = $product->get_regular_price();
-            if (!$regular_price || $regular_price <= 0) {
-                return $price;
+            $original_price = self::$original_prices[$product_id];
+            if (!$original_price || $original_price <= 0) {
+                return $price_html;
             }
             
-            // Calculate role-based price
-            $role_price = $this->core->calculate_price($regular_price, $product);
-            
-            // If we have a discount, set it as the sale price
-            if ($role_price && $role_price < $regular_price) {
-                return $role_price;
+            // Get current price (which should be the discounted price)
+            $current_price = $product->get_price();
+            if (!$current_price || $current_price <= 0 || $current_price >= $original_price) {
+                // Remove stale data from memory if prices don't match expected discount
+                unset(self::$original_prices[$product_id]);
+                return $price_html;
             }
             
-            return $price;
+            // Format with strikethrough original price and highlighted discounted price
+            $original_price_html = wc_price($original_price);
+            $discounted_price_html = wc_price($current_price);
+            
+            return sprintf(
+                '<span class="maxt-rbp-price"><del class="maxt-rbp-original">%s</del> <ins class="maxt-rbp-member">%s</ins></span>',
+                $original_price_html,
+                $discounted_price_html
+            );
             
         } catch (Exception $e) {
-            // Log error and return original price to ensure functionality continues
+            // Log error and return original price HTML to ensure functionality continues
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('MaxT RBP Sale Price Calculation Error: ' . $e->getMessage());
+                error_log('MaxT RBP Price HTML Formatting Error: ' . $e->getMessage());
             }
             
-            // Always return original price on error to prevent pricing failures
-            return $price;
+            return $price_html;
         }
     }
+
+    /**
+     * Format variation price HTML with strikethrough for discounted prices
+     * PERFORMANCE FIX: Uses in-memory storage instead of database reads for variations
+     */
+    public function format_variation_price_html($variation_data, $variable_product, $variation) {
+        try {
+            if (!$variation || !$this->core) {
+                return $variation_data;
+            }
+            
+            // Early return if no discounts have been applied during this request
+            if (!self::$user_has_discounts) {
+                return $variation_data;
+            }
+            
+            // Only apply to logged-in users with pricing rules
+            if (!is_user_logged_in()) {
+                return $variation_data;
+            }
+            
+            $user_has_pricing_rules = $this->get_user_pricing_rules_status();
+            if (!$user_has_pricing_rules) {
+                return $variation_data;
+            }
+            
+            // Get original price from in-memory storage using variation ID
+            $variation_id = $variation->get_id();
+            if (!isset(self::$original_prices[$variation_id])) {
+                return $variation_data;
+            }
+            
+            $original_price = self::$original_prices[$variation_id];
+            if (!$original_price || $original_price <= 0) {
+                return $variation_data;
+            }
+            
+            // Get current price (which should be the discounted price)
+            $current_price = $variation->get_price();
+            if (!$current_price || $current_price <= 0 || $current_price >= $original_price) {
+                // Remove stale data from memory if prices don't match expected discount
+                unset(self::$original_prices[$variation_id]);
+                return $variation_data;
+            }
+            
+            // Format with strikethrough original price and highlighted discounted price
+            $original_price_html = wc_price($original_price);
+            $discounted_price_html = wc_price($current_price);
+            
+            $variation_data['price_html'] = sprintf(
+                '<span class="maxt-rbp-price"><del class="maxt-rbp-original">%s</del> <ins class="maxt-rbp-member">%s</ins></span>',
+                $original_price_html,
+                $discounted_price_html
+            );
+            
+            return $variation_data;
+            
+        } catch (Exception $e) {
+            // Log error and return original variation data to ensure functionality continues
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('MaxT RBP Variation Price HTML Formatting Error: ' . $e->getMessage());
+            }
+            
+            return $variation_data;
+        }
+    }
+
 
 
     /**
@@ -547,6 +651,18 @@ class MaxT_Role_Based_Pricing {
         if ($this->core) {
             $this->core->clear_all_cache();
         }
+        
+        // Clear in-memory storage
+        self::clear_in_memory_storage();
+    }
+
+    /**
+     * Clear in-memory storage for original prices and discount flags
+     * PERFORMANCE FIX: Ensures clean state between different users/requests
+     */
+    public static function clear_in_memory_storage() {
+        self::$original_prices = array();
+        self::$user_has_discounts = false;
     }
 
     /**
