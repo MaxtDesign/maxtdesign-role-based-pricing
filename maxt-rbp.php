@@ -187,6 +187,7 @@ class MaxT_Role_Based_Pricing {
             'maxt_rbp_version' => MAXT_RBP_VERSION,
             'maxt_rbp_cache_duration' => 3600, // 1 hour
             'maxt_rbp_display_original_price' => true,
+            'maxt_rbp_cache_method' => 'auto', // Will be auto-detected
         );
         
         foreach ($default_options as $option => $value) {
@@ -386,6 +387,9 @@ class MaxT_Role_Based_Pricing {
             'maxt_rbp_version',
             'maxt_rbp_cache_duration',
             'maxt_rbp_display_original_price',
+            'maxt_rbp_cache_method',
+            'maxt_rbp_last_cache_clear',
+            'maxt_rbp_cache_logs',
         );
 
         foreach ($plugin_options as $option) {
