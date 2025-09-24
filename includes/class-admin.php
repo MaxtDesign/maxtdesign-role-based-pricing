@@ -30,6 +30,13 @@ class MaxT_RBP_Admin {
         add_action('wp_ajax_maxt_rbp_add_global_rule', array($this, 'ajax_add_global_rule'));
         add_action('wp_ajax_maxt_rbp_delete_global_rule', array($this, 'ajax_delete_global_rule'));
         add_action('wp_ajax_maxt_rbp_toggle_global_rule', array($this, 'ajax_toggle_global_rule'));
+        add_action('wp_ajax_maxt_rbp_clear_cache', array($this, 'ajax_clear_cache'));
+        add_action('wp_ajax_maxt_rbp_clear_role_cache', array($this, 'ajax_clear_role_cache'));
+        add_action('wp_ajax_maxt_rbp_clear_product_cache', array($this, 'ajax_clear_product_cache'));
+        add_action('wp_ajax_maxt_rbp_warm_cache', array($this, 'ajax_warm_cache'));
+        add_action('wp_ajax_maxt_rbp_get_cache_health', array($this, 'ajax_get_cache_health'));
+        add_action('wp_ajax_maxt_rbp_edit_global_rule', array($this, 'ajax_edit_global_rule'));
+        add_action('wp_ajax_maxt_rbp_edit_product_rule', array($this, 'ajax_edit_product_rule'));
     }
 
     public function add_admin_menu() {
@@ -81,7 +88,10 @@ class MaxT_RBP_Admin {
                 $role_display_name = $this->get_role_display_name($rule['role_name']);
                 $discount_type_display = $rule['discount_type'] === 'percentage' ? __('Percentage', 'maxt-rbp') : __('Fixed Amount', 'maxt-rbp');
                 $discount_value_display = $rule['discount_type'] === 'percentage' ? $rule['discount_value'] . '%' : wc_price($rule['discount_value']);
-                echo '<tr><td>' . esc_html($role_display_name) . '</td><td>' . esc_html($discount_type_display) . '</td><td>' . $discount_value_display . '</td><td><a href="#" class="button button-small maxt-rbp-delete-rule" data-rule-id="' . esc_attr($rule['id']) . '">' . esc_html__('Delete', 'maxt-rbp') . '</a></td></tr>';
+                echo '<tr><td>' . esc_html($role_display_name) . '</td><td>' . esc_html($discount_type_display) . '</td><td>' . $discount_value_display . '</td><td>';
+                echo '<button type="button" class="button button-small maxt-rbp-edit-product-rule" data-rule-id="' . esc_attr($rule['id']) . '" data-role-name="' . esc_attr($rule['role_name']) . '" data-discount-type="' . esc_attr($rule['discount_type']) . '" data-discount-value="' . esc_attr($rule['discount_value']) . '">' . esc_html__('Edit', 'maxt-rbp') . '</button> ';
+                echo '<a href="#" class="button button-small maxt-rbp-delete-rule" data-rule-id="' . esc_attr($rule['id']) . '">' . esc_html__('Delete', 'maxt-rbp') . '</a>';
+                echo '</td></tr>';
             }
             echo '</tbody></table><br>';
         }
@@ -160,6 +170,63 @@ class MaxT_RBP_Admin {
                     }
                 });
             });
+            
+            // Edit Product Rule functionality
+            $('.maxt-rbp-edit-product-rule').on('click', function(e) {
+                e.preventDefault();
+                
+                var $button = $(this);
+                var ruleId = $button.data('rule-id');
+                var roleName = $button.data('role-name');
+                var discountType = $button.data('discount-type');
+                var discountValue = $button.data('discount-value');
+                
+                // Create a simple prompt-based edit (since we're in product meta box)
+                var newDiscountType = prompt('<?php esc_js(__('Discount Type (percentage or fixed):', 'maxt-rbp')); ?>', discountType);
+                if (newDiscountType === null) return; // User cancelled
+                
+                if (!['percentage', 'fixed'].includes(newDiscountType)) {
+                    alert('<?php esc_js(__('Invalid discount type. Please enter "percentage" or "fixed".', 'maxt-rbp')); ?>');
+                    return;
+                }
+                
+                var newDiscountValue = prompt('<?php esc_js(__('Discount Value:', 'maxt-rbp')); ?>', discountValue);
+                if (newDiscountValue === null) return; // User cancelled
+                
+                newDiscountValue = parseFloat(newDiscountValue);
+                if (isNaN(newDiscountValue) || newDiscountValue <= 0) {
+                    alert('<?php esc_js(__('Please enter a valid discount value greater than 0.', 'maxt-rbp')); ?>');
+                    return;
+                }
+                
+                if (newDiscountType === 'percentage' && newDiscountValue > 100) {
+                    alert('<?php esc_js(__('Percentage discount cannot exceed 100%.', 'maxt-rbp')); ?>');
+                    return;
+                }
+                
+                // Send AJAX request to update the rule
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'maxt_rbp_edit_product_rule',
+                        rule_id: ruleId,
+                        discount_type: newDiscountType,
+                        discount_value: newDiscountValue,
+                        nonce: '<?php echo wp_create_nonce('maxt_rbp_add_rule'); ?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload(); // Reload to show updated data
+                        } else {
+                            alert(response.data || '<?php esc_js(__('Error updating product rule.', 'maxt-rbp')); ?>');
+                        }
+                    },
+                    error: function() {
+                        alert('<?php esc_js(__('Error updating product rule.', 'maxt-rbp')); ?>');
+                    }
+                });
+            });
         });
         </script>
         <?php
@@ -172,6 +239,17 @@ class MaxT_RBP_Admin {
             if (wp_verify_nonce($nonce, 'clear_cache') && current_user_can('manage_woocommerce')) {
                 $this->core->clear_all_cache();
                 echo '<div class="notice notice-success"><p>' . esc_html__('Cache cleared successfully.', 'maxt-rbp') . '</p></div>';
+            } else {
+                echo '<div class="notice notice-error"><p>' . esc_html__('Security check failed.', 'maxt-rbp') . '</p></div>';
+            }
+        }
+        
+        // Handle cache warming
+        if (isset($_GET['action']) && $_GET['action'] === 'warm_cache' && isset($_GET['_wpnonce'])) {
+            $nonce = sanitize_text_field($_GET['_wpnonce']);
+            if (wp_verify_nonce($nonce, 'warm_cache') && current_user_can('manage_woocommerce')) {
+                $warmed_count = $this->core->warm_cache();
+                echo '<div class="notice notice-success"><p>' . sprintf(esc_html__('Cache warmed successfully. %d entries created.', 'maxt-rbp'), $warmed_count) . '</p></div>';
             } else {
                 echo '<div class="notice notice-error"><p>' . esc_html__('Security check failed.', 'maxt-rbp') . '</p></div>';
             }
@@ -218,11 +296,13 @@ class MaxT_RBP_Admin {
 
         echo '<div class="wrap"><h1>' . esc_html__('MaxT Role Pricing Settings', 'maxt-rbp') . '</h1>';
         
-        // Add cache clear button
-        echo '<p><a href="?page=maxt-role-pricing&action=clear_cache&_wpnonce=' . wp_create_nonce('clear_cache') . '" class="button">' . esc_html__('Clear Pricing Cache', 'maxt-rbp') . '</a> ';
+        // Enhanced Cache Management Section
+        echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Cache Management', 'maxt-rbp') . '</h2>';
+        $this->render_cache_management_section();
+        echo '</div>';
         
         // Add create default global rules button
-        echo '<a href="?page=maxt-role-pricing&action=create_default_global_rules&_wpnonce=' . wp_create_nonce('create_default_global_rules') . '" class="button button-primary">' . esc_html__('Create Global Rules for All Roles', 'maxt-rbp') . '</a></p>';
+        echo '<p><a href="?page=maxt-role-pricing&action=create_default_global_rules&_wpnonce=' . wp_create_nonce('create_default_global_rules') . '" class="button button-primary">' . esc_html__('Create Global Rules for All Roles', 'maxt-rbp') . '</a></p>';
         
         // Global Pricing Rules Section
         echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Global Pricing Rules', 'maxt-rbp') . '</h2>';
@@ -243,6 +323,7 @@ class MaxT_RBP_Admin {
                 echo '<td>' . $discount_value_display . '</td>';
                 echo '<td>' . $status_display . '</td>';
                 echo '<td>';
+                echo '<button type="button" class="button button-small maxt-rbp-edit-global-rule" data-rule-id="' . esc_attr($rule['id']) . '" data-role-name="' . esc_attr($rule['role_name']) . '" data-discount-type="' . esc_attr($rule['discount_type']) . '" data-discount-value="' . esc_attr($rule['discount_value']) . '">' . esc_html__('Edit', 'maxt-rbp') . '</button> ';
                 echo '<button type="button" class="button button-small maxt-rbp-toggle-global-rule" data-rule-id="' . esc_attr($rule['id']) . '" data-current-status="' . esc_attr($rule['is_active']) . '">';
                 echo $rule['is_active'] ? esc_html__('Deactivate', 'maxt-rbp') : esc_html__('Activate', 'maxt-rbp');
                 echo '</button> ';
@@ -258,6 +339,9 @@ class MaxT_RBP_Admin {
         echo '<h3>' . esc_html__('Add Global Pricing Rule', 'maxt-rbp') . '</h3>';
         $this->render_global_rule_form();
         echo '</div>';
+        
+        // Add edit modal
+        $this->render_edit_modal();
         
         echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Role Management', 'maxt-rbp') . '</h2>';
         
@@ -297,7 +381,7 @@ class MaxT_RBP_Admin {
         }
         echo '</div></div>';
         
-        // Add JavaScript for global rules
+        // Add JavaScript for global rules and cache management
         ?>
         <script type="text/javascript">
         jQuery(document).ready(function($) {
@@ -391,6 +475,242 @@ class MaxT_RBP_Admin {
                     }
                 });
             });
+            
+            // Edit Global Rule functionality
+            $('.maxt-rbp-edit-global-rule').on('click', function(e) {
+                e.preventDefault();
+                
+                var $button = $(this);
+                var ruleId = $button.data('rule-id');
+                var roleName = $button.data('role-name');
+                var discountType = $button.data('discount-type');
+                var discountValue = $button.data('discount-value');
+                
+                // Populate modal form
+                $('#edit_rule_id').val(ruleId);
+                $('#edit_role_name').val(roleName);
+                $('#edit_discount_type').val(discountType);
+                $('#edit_discount_value').val(discountValue);
+                
+                // Show modal
+                $('#maxt-rbp-edit-modal').show();
+            });
+            
+            // Close modal when clicking X or Cancel
+            $('.maxt-rbp-modal-close, #maxt-rbp-cancel-edit').on('click', function() {
+                $('#maxt-rbp-edit-modal').hide();
+            });
+            
+            // Close modal when clicking outside
+            $(window).on('click', function(e) {
+                if (e.target.id === 'maxt-rbp-edit-modal') {
+                    $('#maxt-rbp-edit-modal').hide();
+                }
+            });
+            
+            // Handle edit form submission
+            $('#maxt-rbp-edit-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                var ruleId = $('#edit_rule_id').val();
+                var discountType = $('#edit_discount_type').val();
+                var discountValue = $('#edit_discount_value').val();
+                
+                if (!discountType || !discountValue) {
+                    alert('<?php esc_js(__('Please fill in all fields.', 'maxt-rbp')); ?>');
+                    return;
+                }
+                
+                var $submitButton = $(this).find('button[type="submit"]');
+                var originalText = $submitButton.text();
+                $submitButton.prop('disabled', true).text('<?php esc_js(__('Updating...', 'maxt-rbp')); ?>');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'maxt_rbp_edit_global_rule',
+                        rule_id: ruleId,
+                        discount_type: discountType,
+                        discount_value: discountValue,
+                        nonce: '<?php echo wp_create_nonce('maxt_rbp_global_rule'); ?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Close modal
+                            $('#maxt-rbp-edit-modal').hide();
+                            
+                            // Reload page to show updated data
+                            location.reload();
+                        } else {
+                            alert(response.data || '<?php esc_js(__('Error updating global rule.', 'maxt-rbp')); ?>');
+                        }
+                    },
+                    error: function() {
+                        alert('<?php esc_js(__('Error updating global rule.', 'maxt-rbp')); ?>');
+                    },
+                    complete: function() {
+                        $submitButton.prop('disabled', false).text(originalText);
+                    }
+                });
+            });
+            
+            // Cache Management JavaScript
+            var cacheNonce = '<?php echo wp_create_nonce('maxt_rbp_cache_action'); ?>';
+            
+            // Clear all cache
+            $('#maxt-rbp-clear-all-cache').on('click', function() {
+                if (!confirm('<?php esc_js(__('Are you sure you want to clear all cache?', 'maxt-rbp')); ?>')) return;
+                
+                var $button = $(this);
+                $button.prop('disabled', true).text('<?php esc_js(__('Clearing...', 'maxt-rbp')); ?>');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'maxt_rbp_clear_cache',
+                        nonce: cacheNonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            showCacheMessage(response.data.message, 'success');
+                            updateCacheStatus();
+                        } else {
+                            showCacheMessage(response.data || '<?php esc_js(__('Error clearing cache.', 'maxt-rbp')); ?>', 'error');
+                        }
+                    },
+                    complete: function() {
+                        $button.prop('disabled', false).text('<?php esc_js(__('Clear All Cache', 'maxt-rbp')); ?>');
+                    }
+                });
+            });
+            
+            // Warm cache
+            $('#maxt-rbp-warm-cache').on('click', function() {
+                var $button = $(this);
+                $button.prop('disabled', true).text('<?php esc_js(__('Warming...', 'maxt-rbp')); ?>');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'maxt_rbp_warm_cache',
+                        nonce: cacheNonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            showCacheMessage(response.data.message, 'success');
+                            updateCacheStatus();
+                        } else {
+                            showCacheMessage(response.data || '<?php esc_js(__('Error warming cache.', 'maxt-rbp')); ?>', 'error');
+                        }
+                    },
+                    complete: function() {
+                        $button.prop('disabled', false).text('<?php esc_js(__('Warm Cache', 'maxt-rbp')); ?>');
+                    }
+                });
+            });
+            
+            // Clear role cache
+            $('#maxt-rbp-clear-role-cache').on('click', function() {
+                var roleName = $('#maxt-rbp-clear-role').val();
+                if (!roleName) {
+                    alert('<?php esc_js(__('Please select a role.', 'maxt-rbp')); ?>');
+                    return;
+                }
+                
+                var $button = $(this);
+                $button.prop('disabled', true).text('<?php esc_js(__('Clearing...', 'maxt-rbp')); ?>');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'maxt_rbp_clear_role_cache',
+                        role_name: roleName,
+                        nonce: cacheNonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            showCacheMessage(response.data.message, 'success');
+                            updateCacheStatus();
+                        } else {
+                            showCacheMessage(response.data || '<?php esc_js(__('Error clearing role cache.', 'maxt-rbp')); ?>', 'error');
+                        }
+                    },
+                    complete: function() {
+                        $button.prop('disabled', false).text('<?php esc_js(__('Clear Role Cache', 'maxt-rbp')); ?>');
+                    }
+                });
+            });
+            
+            // Clear product cache
+            $('#maxt-rbp-clear-product-cache').on('click', function() {
+                var productId = $('#maxt-rbp-clear-product').val();
+                if (!productId) {
+                    alert('<?php esc_js(__('Please enter a product ID.', 'maxt-rbp')); ?>');
+                    return;
+                }
+                
+                var $button = $(this);
+                $button.prop('disabled', true).text('<?php esc_js(__('Clearing...', 'maxt-rbp')); ?>');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'maxt_rbp_clear_product_cache',
+                        product_id: productId,
+                        nonce: cacheNonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            showCacheMessage(response.data.message, 'success');
+                            updateCacheStatus();
+                        } else {
+                            showCacheMessage(response.data || '<?php esc_js(__('Error clearing product cache.', 'maxt-rbp')); ?>', 'error');
+                        }
+                    },
+                    complete: function() {
+                        $button.prop('disabled', false).text('<?php esc_js(__('Clear Product Cache', 'maxt-rbp')); ?>');
+                    }
+                });
+            });
+            
+            // Refresh cache status
+            $('#maxt-rbp-refresh-cache-status').on('click', function() {
+                updateCacheStatus();
+            });
+            
+            // Helper functions
+            function showCacheMessage(message, type) {
+                var className = type === 'success' ? 'notice-success' : 'notice-error';
+                var notice = '<div class="notice ' + className + ' is-dismissible"><p>' + message + '</p></div>';
+                $('.maxt-rbp-cache-actions').before(notice);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(function() {
+                    $('.notice.is-dismissible').fadeOut();
+                }, 5000);
+            }
+            
+            function updateCacheStatus() {
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'maxt_rbp_get_cache_health',
+                        nonce: cacheNonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Update cache status display
+                            location.reload(); // Simple refresh for now
+                        }
+                    }
+                });
+            }
         });
         </script>
         <?php
@@ -496,6 +816,11 @@ class MaxT_RBP_Admin {
     public function admin_scripts($hook) {
         if (in_array($hook, array('post.php', 'post-new.php', 'woocommerce_page_maxt-role-pricing'))) {
             wp_enqueue_script('jquery');
+            
+            // Enqueue admin CSS for cache management page
+            if ($hook === 'woocommerce_page_maxt-role-pricing') {
+                wp_enqueue_style('maxt-rbp-admin', MAXT_RBP_PLUGIN_URL . 'assets/css/admin.css', array(), MAXT_RBP_VERSION);
+            }
         }
     }
 
@@ -572,6 +897,53 @@ class MaxT_RBP_Admin {
         </form>
         <?php
         echo ob_get_clean();
+    }
+
+    /**
+     * Render edit modal for global rules
+     */
+    private function render_edit_modal() {
+        ?>
+        <div id="maxt-rbp-edit-modal" class="maxt-rbp-modal" style="display: none;">
+            <div class="maxt-rbp-modal-content">
+                <div class="maxt-rbp-modal-header">
+                    <h3><?php esc_html_e('Edit Global Pricing Rule', 'maxt-rbp'); ?></h3>
+                    <span class="maxt-rbp-modal-close">&times;</span>
+                </div>
+                <div class="maxt-rbp-modal-body">
+                    <form id="maxt-rbp-edit-form">
+                        <input type="hidden" id="edit_rule_id" name="rule_id" />
+                        
+                        <div class="maxt-rbp-form-group">
+                            <label for="edit_role_name"><?php esc_html_e('User Role', 'maxt-rbp'); ?></label>
+                            <input type="text" id="edit_role_name" name="role_name" readonly class="maxt-rbp-readonly" />
+                            <p class="description"><?php esc_html_e('Role name cannot be changed.', 'maxt-rbp'); ?></p>
+                        </div>
+                        
+                        <div class="maxt-rbp-form-group">
+                            <label for="edit_discount_type"><?php esc_html_e('Discount Type', 'maxt-rbp'); ?></label>
+                            <select id="edit_discount_type" name="discount_type" required>
+                                <option value="percentage"><?php esc_html_e('Percentage', 'maxt-rbp'); ?></option>
+                                <option value="fixed"><?php esc_html_e('Fixed Amount', 'maxt-rbp'); ?></option>
+                            </select>
+                            <p class="description"><?php esc_html_e('Choose whether to apply a percentage or fixed amount discount.', 'maxt-rbp'); ?></p>
+                        </div>
+                        
+                        <div class="maxt-rbp-form-group">
+                            <label for="edit_discount_value"><?php esc_html_e('Discount Value', 'maxt-rbp'); ?></label>
+                            <input type="number" id="edit_discount_value" name="discount_value" step="0.01" min="0" required />
+                            <p class="description"><?php esc_html_e('Enter the discount value (percentage or amount).', 'maxt-rbp'); ?></p>
+                        </div>
+                        
+                        <div class="maxt-rbp-modal-footer">
+                            <button type="button" class="button" id="maxt-rbp-cancel-edit"><?php esc_html_e('Cancel', 'maxt-rbp'); ?></button>
+                            <button type="submit" class="button button-primary"><?php esc_html_e('Update Rule', 'maxt-rbp'); ?></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <?php
     }
 
     public function ajax_add_global_rule() {
@@ -705,6 +1077,281 @@ class MaxT_RBP_Admin {
                 'success' => true,
                 'message' => sprintf(__('Successfully created %d default global pricing rules, skipped %d existing rules.', 'maxt-rbp'), $created_count, $skipped_count)
             );
+        }
+    }
+
+    /**
+     * Render cache management section
+     */
+    private function render_cache_management_section() {
+        $cache_health = $this->core->get_cache_health();
+        $cache_logs = get_option('maxt_rbp_cache_logs', array());
+        
+        echo '<div class="maxt-rbp-cache-status">';
+        echo '<h3>' . esc_html__('Cache Status', 'maxt-rbp') . '</h3>';
+        echo '<table class="widefat"><tbody>';
+        echo '<tr><td><strong>' . esc_html__('Cache Method', 'maxt-rbp') . '</strong></td><td>' . esc_html(ucfirst($cache_health['method'])) . '</td></tr>';
+        echo '<tr><td><strong>' . esc_html__('Object Cache Available', 'maxt-rbp') . '</strong></td><td>' . ($cache_health['object_cache_available'] ? '<span style="color: green;">' . esc_html__('Yes', 'maxt-rbp') . '</span>' : '<span style="color: red;">' . esc_html__('No', 'maxt-rbp') . '</span>') . '</td></tr>';
+        echo '<tr><td><strong>' . esc_html__('Estimated Cache Entries', 'maxt-rbp') . '</strong></td><td>' . esc_html($cache_health['estimated_entries']) . '</td></tr>';
+        echo '<tr><td><strong>' . esc_html__('Last Cache Clear', 'maxt-rbp') . '</strong></td><td>' . esc_html($cache_health['last_cleared'] ?: esc_html__('Never', 'maxt-rbp')) . '</td></tr>';
+        echo '</tbody></table>';
+        echo '</div>';
+        
+        echo '<div class="maxt-rbp-cache-actions">';
+        echo '<h3>' . esc_html__('Cache Actions', 'maxt-rbp') . '</h3>';
+        echo '<p>';
+        echo '<button type="button" class="button" id="maxt-rbp-clear-all-cache">' . esc_html__('Clear All Cache', 'maxt-rbp') . '</button> ';
+        echo '<button type="button" class="button" id="maxt-rbp-warm-cache">' . esc_html__('Warm Cache', 'maxt-rbp') . '</button> ';
+        echo '<button type="button" class="button" id="maxt-rbp-refresh-cache-status">' . esc_html__('Refresh Status', 'maxt-rbp') . '</button>';
+        echo '</p>';
+        
+        echo '<div class="maxt-rbp-selective-cache">';
+        echo '<h4>' . esc_html__('Selective Cache Clearing', 'maxt-rbp') . '</h4>';
+        
+        // Role-based cache clearing
+        $all_roles = $this->core->get_all_roles();
+        echo '<p><label for="maxt-rbp-clear-role">' . esc_html__('Clear cache for role:', 'maxt-rbp') . '</label> ';
+        echo '<select id="maxt-rbp-clear-role">';
+        echo '<option value="">' . esc_html__('Select a role...', 'maxt-rbp') . '</option>';
+        foreach ($all_roles as $role_name => $role_data) {
+            echo '<option value="' . esc_attr($role_name) . '">' . esc_html($role_data['display_name']) . '</option>';
+        }
+        echo '</select> ';
+        echo '<button type="button" class="button" id="maxt-rbp-clear-role-cache">' . esc_html__('Clear Role Cache', 'maxt-rbp') . '</button></p>';
+        
+        // Product-based cache clearing
+        echo '<p><label for="maxt-rbp-clear-product">' . esc_html__('Clear cache for product ID:', 'maxt-rbp') . '</label> ';
+        echo '<input type="number" id="maxt-rbp-clear-product" placeholder="' . esc_attr__('Enter product ID', 'maxt-rbp') . '" /> ';
+        echo '<button type="button" class="button" id="maxt-rbp-clear-product-cache">' . esc_html__('Clear Product Cache', 'maxt-rbp') . '</button></p>';
+        echo '</div>';
+        echo '</div>';
+        
+        // Cache logs section
+        if (!empty($cache_logs) && defined('WP_DEBUG') && WP_DEBUG) {
+            echo '<div class="maxt-rbp-cache-logs">';
+            echo '<h3>' . esc_html__('Recent Cache Events', 'maxt-rbp') . '</h3>';
+            echo '<table class="widefat"><thead><tr><th>' . esc_html__('Time', 'maxt-rbp') . '</th><th>' . esc_html__('Event', 'maxt-rbp') . '</th><th>' . esc_html__('Details', 'maxt-rbp') . '</th></tr></thead><tbody>';
+            $recent_logs = array_slice(array_reverse($cache_logs), 0, 10);
+            foreach ($recent_logs as $log) {
+                echo '<tr>';
+                echo '<td>' . esc_html($log['timestamp']) . '</td>';
+                echo '<td>' . esc_html(ucwords(str_replace('_', ' ', $log['event_type']))) . '</td>';
+                echo '<td>' . esc_html(implode(', ', array_map(function($k, $v) { return $k . ': ' . $v; }, array_keys($log['data']), $log['data']))) . '</td>';
+                echo '</tr>';
+            }
+            echo '</tbody></table>';
+            echo '</div>';
+        }
+    }
+
+    /**
+     * AJAX handler for clearing all cache
+     */
+    public function ajax_clear_cache() {
+        check_ajax_referer('maxt_rbp_cache_action', 'nonce');
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+        }
+        
+        $this->core->clear_all_cache();
+        
+        wp_send_json_success(array(
+            'message' => __('All cache cleared successfully.', 'maxt-rbp'),
+            'timestamp' => current_time('mysql')
+        ));
+    }
+
+    /**
+     * AJAX handler for clearing role-specific cache
+     */
+    public function ajax_clear_role_cache() {
+        check_ajax_referer('maxt_rbp_cache_action', 'nonce');
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+        }
+        
+        $role_name = sanitize_text_field($_POST['role_name']);
+        if (empty($role_name)) {
+            wp_send_json_error(__('Role name is required.', 'maxt-rbp'));
+        }
+        
+        $this->core->clear_role_cache($role_name);
+        
+        wp_send_json_success(array(
+            'message' => sprintf(__('Cache cleared for role: %s', 'maxt-rbp'), $role_name),
+            'timestamp' => current_time('mysql')
+        ));
+    }
+
+    /**
+     * AJAX handler for clearing product-specific cache
+     */
+    public function ajax_clear_product_cache() {
+        check_ajax_referer('maxt_rbp_cache_action', 'nonce');
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+        }
+        
+        $product_id = intval($_POST['product_id']);
+        if ($product_id <= 0) {
+            wp_send_json_error(__('Valid product ID is required.', 'maxt-rbp'));
+        }
+        
+        $this->core->clear_product_cache($product_id);
+        
+        wp_send_json_success(array(
+            'message' => sprintf(__('Cache cleared for product ID: %d', 'maxt-rbp'), $product_id),
+            'timestamp' => current_time('mysql')
+        ));
+    }
+
+    /**
+     * AJAX handler for cache warming
+     */
+    public function ajax_warm_cache() {
+        check_ajax_referer('maxt_rbp_cache_action', 'nonce');
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+        }
+        
+        $product_ids = isset($_POST['product_ids']) ? array_map('intval', (array)$_POST['product_ids']) : array();
+        $role_names = isset($_POST['role_names']) ? array_map('sanitize_text_field', (array)$_POST['role_names']) : array();
+        
+        $warmed_count = $this->core->warm_cache($product_ids, $role_names);
+        
+        wp_send_json_success(array(
+            'message' => sprintf(__('Cache warmed successfully. %d entries created.', 'maxt-rbp'), $warmed_count),
+            'warmed_count' => $warmed_count,
+            'timestamp' => current_time('mysql')
+        ));
+    }
+
+    /**
+     * AJAX handler for getting cache health status
+     */
+    public function ajax_get_cache_health() {
+        check_ajax_referer('maxt_rbp_cache_action', 'nonce');
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+        }
+        
+        $cache_health = $this->core->get_cache_health();
+        
+        wp_send_json_success($cache_health);
+    }
+
+    /**
+     * AJAX handler for editing global rules
+     */
+    public function ajax_edit_global_rule() {
+        check_ajax_referer('maxt_rbp_global_rule', 'nonce');
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+        }
+        
+        $rule_id = intval($_POST['rule_id']);
+        $discount_type = sanitize_text_field($_POST['discount_type']);
+        $discount_value = floatval($_POST['discount_value']);
+        
+        if ($rule_id <= 0) {
+            wp_send_json_error(__('Invalid rule ID.', 'maxt-rbp'));
+        }
+        
+        if (!in_array($discount_type, array('percentage', 'fixed'))) {
+            wp_send_json_error(__('Invalid discount type.', 'maxt-rbp'));
+        }
+        
+        if ($discount_value <= 0) {
+            wp_send_json_error(__('Discount value must be greater than 0.', 'maxt-rbp'));
+        }
+        
+        if ($discount_type === 'percentage' && $discount_value > 100) {
+            wp_send_json_error(__('Percentage discount cannot exceed 100%.', 'maxt-rbp'));
+        }
+        
+        $update_data = array(
+            'discount_type' => $discount_type,
+            'discount_value' => $discount_value
+        );
+        
+        $result = $this->core->update_global_rule($rule_id, $update_data);
+        
+        if ($result) {
+            wp_send_json_success(array(
+                'message' => __('Global pricing rule updated successfully.', 'maxt-rbp'),
+                'discount_type' => $discount_type,
+                'discount_value' => $discount_value
+            ));
+        } else {
+            wp_send_json_error(__('Failed to update global pricing rule.', 'maxt-rbp'));
+        }
+    }
+
+    /**
+     * AJAX handler for editing product-specific rules
+     */
+    public function ajax_edit_product_rule() {
+        check_ajax_referer('maxt_rbp_add_rule', 'nonce');
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+        }
+        
+        $rule_id = intval($_POST['rule_id']);
+        $discount_type = sanitize_text_field($_POST['discount_type']);
+        $discount_value = floatval($_POST['discount_value']);
+        
+        if ($rule_id <= 0) {
+            wp_send_json_error(__('Invalid rule ID.', 'maxt-rbp'));
+        }
+        
+        if (!in_array($discount_type, array('percentage', 'fixed'))) {
+            wp_send_json_error(__('Invalid discount type.', 'maxt-rbp'));
+        }
+        
+        if ($discount_value <= 0) {
+            wp_send_json_error(__('Discount value must be greater than 0.', 'maxt-rbp'));
+        }
+        
+        if ($discount_type === 'percentage' && $discount_value > 100) {
+            wp_send_json_error(__('Percentage discount cannot exceed 100%.', 'maxt-rbp'));
+        }
+        
+        // Get the rule first to get the product ID for cache clearing
+        global $wpdb;
+        $rule = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}maxt_rbp_rules WHERE id = %d", $rule_id), ARRAY_A);
+        
+        if (!$rule) {
+            wp_send_json_error(__('Rule not found.', 'maxt-rbp'));
+        }
+        
+        // Update the rule
+        $update_data = array(
+            'discount_type' => $discount_type,
+            'discount_value' => $discount_value
+        );
+        
+        $result = $wpdb->update(
+            $wpdb->prefix . 'maxt_rbp_rules',
+            $update_data,
+            array('id' => $rule_id),
+            array('%s', '%f'),
+            array('%d')
+        );
+        
+        if ($result !== false) {
+            // Clear product cache
+            $this->core->clear_product_cache($rule['product_id']);
+            
+            // Update last cache clear timestamp
+            update_option('maxt_rbp_last_cache_clear', current_time('mysql'));
+            
+            wp_send_json_success(array(
+                'message' => __('Product pricing rule updated successfully.', 'maxt-rbp'),
+                'discount_type' => $discount_type,
+                'discount_value' => $discount_value
+            ));
+        } else {
+            wp_send_json_error(__('Failed to update product pricing rule.', 'maxt-rbp'));
         }
     }
 }
