@@ -37,6 +37,9 @@ class MaxT_RBP_Admin {
         add_action('wp_ajax_maxt_rbp_get_cache_health', array($this, 'ajax_get_cache_health'));
         add_action('wp_ajax_maxt_rbp_edit_global_rule', array($this, 'ajax_edit_global_rule'));
         add_action('wp_ajax_maxt_rbp_edit_product_rule', array($this, 'ajax_edit_product_rule'));
+        add_action('wp_ajax_maxt_rbp_get_db_health', array($this, 'ajax_get_db_health'));
+        add_action('wp_ajax_maxt_rbp_get_db_performance', array($this, 'ajax_get_db_performance'));
+        add_action('wp_ajax_maxt_rbp_add_db_indexes', array($this, 'ajax_add_db_indexes'));
     }
 
     public function add_admin_menu() {
@@ -299,6 +302,11 @@ class MaxT_RBP_Admin {
         // Enhanced Cache Management Section
         echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Cache Management', 'maxt-rbp') . '</h2>';
         $this->render_cache_management_section();
+        echo '</div>';
+        
+        // Database Performance Section
+        echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Database Performance', 'maxt-rbp') . '</h2>';
+        $this->render_database_performance_section();
         echo '</div>';
         
         // Add create default global rules button
@@ -681,6 +689,42 @@ class MaxT_RBP_Admin {
             // Refresh cache status
             $('#maxt-rbp-refresh-cache-status').on('click', function() {
                 updateCacheStatus();
+            });
+            
+            // Database Performance JavaScript
+            // Add missing indexes
+            $('#maxt-rbp-add-db-indexes').on('click', function() {
+                if (!confirm('<?php esc_js(__('Are you sure you want to add missing database indexes?', 'maxt-rbp')); ?>')) return;
+                
+                var $button = $(this);
+                $button.prop('disabled', true).text('<?php esc_js(__('Adding...', 'maxt-rbp')); ?>');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'maxt_rbp_add_db_indexes',
+                        nonce: cacheNonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            showCacheMessage(response.data.message, 'success');
+                            setTimeout(function() {
+                                location.reload(); // Reload to show updated status
+                            }, 2000);
+                        } else {
+                            showCacheMessage(response.data || '<?php esc_js(__('Error adding database indexes.', 'maxt-rbp')); ?>', 'error');
+                        }
+                    },
+                    complete: function() {
+                        $button.prop('disabled', false).text('<?php esc_js(__('Add Missing Indexes', 'maxt-rbp')); ?>');
+                    }
+                });
+            });
+            
+            // Refresh database health status
+            $('#maxt-rbp-refresh-db-health').on('click', function() {
+                location.reload(); // Simple refresh for now
             });
             
             // Helper functions
@@ -1352,6 +1396,125 @@ class MaxT_RBP_Admin {
             ));
         } else {
             wp_send_json_error(__('Failed to update product pricing rule.', 'maxt-rbp'));
+        }
+    }
+
+    /**
+     * Render database performance monitoring section
+     */
+    private function render_database_performance_section() {
+        $db_health = $this->core->check_database_health();
+        $db_performance = $this->core->get_database_performance_stats();
+        
+        echo '<div class="maxt-rbp-db-health">';
+        echo '<h3>' . esc_html__('Database Health Status', 'maxt-rbp') . '</h3>';
+        
+        $status_class = $db_health['status'] === 'healthy' ? 'notice-success' : 'notice-warning';
+        echo '<div class="notice ' . $status_class . ' inline">';
+        echo '<p><strong>' . esc_html__('Status:', 'maxt-rbp') . '</strong> ' . esc_html(ucfirst($db_health['status'])) . '</p>';
+        echo '</div>';
+        
+        if (!empty($db_health['issues'])) {
+            echo '<h4>' . esc_html__('Issues Found:', 'maxt-rbp') . '</h4>';
+            echo '<ul>';
+            foreach ($db_health['issues'] as $issue) {
+                echo '<li>' . esc_html($issue) . '</li>';
+            }
+            echo '</ul>';
+        }
+        
+        if (!empty($db_health['recommendations'])) {
+            echo '<h4>' . esc_html__('Recommendations:', 'maxt-rbp') . '</h4>';
+            echo '<ul>';
+            foreach ($db_health['recommendations'] as $recommendation) {
+                echo '<li>' . esc_html($recommendation) . '</li>';
+            }
+            echo '</ul>';
+        }
+        
+        echo '<h4>' . esc_html__('Index Status:', 'maxt-rbp') . '</h4>';
+        echo '<table class="widefat"><thead><tr><th>' . esc_html__('Table', 'maxt-rbp') . '</th><th>' . esc_html__('Index', 'maxt-rbp') . '</th><th>' . esc_html__('Status', 'maxt-rbp') . '</th></tr></thead><tbody>';
+        foreach ($db_health['index_status'] as $table => $indexes) {
+            foreach ($indexes as $index => $exists) {
+                $status = $exists ? '<span style="color: green;">' . esc_html__('Present', 'maxt-rbp') . '</span>' : '<span style="color: red;">' . esc_html__('Missing', 'maxt-rbp') . '</span>';
+                echo '<tr><td>' . esc_html($table) . '</td><td>' . esc_html($index) . '</td><td>' . $status . '</td></tr>';
+            }
+        }
+        echo '</tbody></table>';
+        echo '</div>';
+        
+        echo '<div class="maxt-rbp-db-performance">';
+        echo '<h3>' . esc_html__('Query Performance Statistics', 'maxt-rbp') . '</h3>';
+        echo '<table class="widefat"><tbody>';
+        echo '<tr><td><strong>' . esc_html__('Total Queries Logged', 'maxt-rbp') . '</strong></td><td>' . esc_html($db_performance['total_queries']) . '</td></tr>';
+        echo '<tr><td><strong>' . esc_html__('Slow Queries', 'maxt-rbp') . '</strong></td><td>' . esc_html($db_performance['slow_queries']) . '</td></tr>';
+        echo '<tr><td><strong>' . esc_html__('Average Execution Time', 'maxt-rbp') . '</strong></td><td>' . esc_html($db_performance['average_execution_time']) . 's</td></tr>';
+        echo '<tr><td><strong>' . esc_html__('Slowest Query Time', 'maxt-rbp') . '</strong></td><td>' . esc_html($db_performance['slowest_query_time']) . 's</td></tr>';
+        echo '</tbody></table>';
+        
+        if (!empty($db_performance['query_types'])) {
+            echo '<h4>' . esc_html__('Query Types:', 'maxt-rbp') . '</h4>';
+            echo '<ul>';
+            foreach ($db_performance['query_types'] as $type => $count) {
+                echo '<li>' . esc_html(ucwords(str_replace('_', ' ', $type))) . ': ' . esc_html($count) . '</li>';
+            }
+            echo '</ul>';
+        }
+        echo '</div>';
+        
+        echo '<div class="maxt-rbp-db-actions">';
+        echo '<h3>' . esc_html__('Database Actions', 'maxt-rbp') . '</h3>';
+        echo '<p>';
+        echo '<button type="button" class="button" id="maxt-rbp-add-db-indexes">' . esc_html__('Add Missing Indexes', 'maxt-rbp') . '</button> ';
+        echo '<button type="button" class="button" id="maxt-rbp-refresh-db-health">' . esc_html__('Refresh Health Status', 'maxt-rbp') . '</button>';
+        echo '</p>';
+        echo '</div>';
+    }
+
+    /**
+     * AJAX handler for getting database health status
+     */
+    public function ajax_get_db_health() {
+        check_ajax_referer('maxt_rbp_cache_action', 'nonce');
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+        }
+        
+        $db_health = $this->core->check_database_health();
+        wp_send_json_success($db_health);
+    }
+
+    /**
+     * AJAX handler for getting database performance statistics
+     */
+    public function ajax_get_db_performance() {
+        check_ajax_referer('maxt_rbp_cache_action', 'nonce');
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+        }
+        
+        $db_performance = $this->core->get_database_performance_stats();
+        wp_send_json_success($db_performance);
+    }
+
+    /**
+     * AJAX handler for adding database indexes
+     */
+    public function ajax_add_db_indexes() {
+        check_ajax_referer('maxt_rbp_cache_action', 'nonce');
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+        }
+        
+        $result = $this->core->add_database_indexes();
+        
+        if ($result) {
+            wp_send_json_success(array(
+                'message' => __('Database indexes added successfully.', 'maxt-rbp'),
+                'timestamp' => current_time('mysql')
+            ));
+        } else {
+            wp_send_json_error(__('Failed to add database indexes. Check error logs for details.', 'maxt-rbp'));
         }
     }
 }
