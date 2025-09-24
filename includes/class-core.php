@@ -39,7 +39,7 @@ class MaxT_RBP_Core {
         global $wpdb;
         $charset_collate = $wpdb->get_charset_collate();
         
-        // Create product-specific rules table
+        // Create product-specific rules table with optimized indexes
         $sql = "CREATE TABLE {$this->table_name} (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             role_name varchar(100) NOT NULL,
@@ -48,11 +48,13 @@ class MaxT_RBP_Core {
             discount_value decimal(10,2) NOT NULL DEFAULT 0.00,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
-            KEY role_name (role_name),
-            KEY product_id (product_id)
+            KEY idx_role_name (role_name),
+            KEY idx_product_id (product_id),
+            KEY idx_role_product (role_name, product_id),
+            KEY idx_created_at (created_at)
         ) $charset_collate;";
         
-        // Create global rules table
+        // Create global rules table with optimized indexes
         $global_sql = "CREATE TABLE {$this->global_table_name} (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             role_name varchar(100) NOT NULL,
@@ -62,7 +64,10 @@ class MaxT_RBP_Core {
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
-            UNIQUE KEY role_name (role_name)
+            UNIQUE KEY idx_role_name (role_name),
+            KEY idx_is_active (is_active),
+            KEY idx_role_active (role_name, is_active),
+            KEY idx_created_at (created_at)
         ) $charset_collate;";
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -77,6 +82,271 @@ class MaxT_RBP_Core {
         $result1 = $wpdb->query("DROP TABLE IF EXISTS {$this->table_name}");
         $result2 = $wpdb->query("DROP TABLE IF EXISTS {$this->global_table_name}");
         return $result1 && $result2;
+    }
+
+    /**
+     * Add database indexes to existing installations
+     * Handles migration-safe index addition with proper error handling
+     */
+    public function add_database_indexes() {
+        global $wpdb;
+        
+        // Check if indexes already exist to prevent duplicate creation
+        $version_key = 'maxt_rbp_db_indexes_version';
+        $current_version = get_option($version_key, '0');
+        $target_version = '1.0.0';
+        
+        if (version_compare($current_version, $target_version, '>=')) {
+            return true; // Indexes already up to date
+        }
+        
+        $indexes_added = 0;
+        $errors = array();
+        
+        // Add indexes to product-specific rules table
+        $product_indexes = array(
+            'idx_role_name' => 'KEY idx_role_name (role_name)',
+            'idx_product_id' => 'KEY idx_product_id (product_id)', 
+            'idx_role_product' => 'KEY idx_role_product (role_name, product_id)',
+            'idx_created_at' => 'KEY idx_created_at (created_at)'
+        );
+        
+        foreach ($product_indexes as $index_name => $index_sql) {
+            if (!$this->index_exists($this->table_name, $index_name)) {
+                $result = $wpdb->query("ALTER TABLE {$this->table_name} ADD {$index_sql}");
+                if ($result !== false) {
+                    $indexes_added++;
+                } else {
+                    $errors[] = "Failed to add index {$index_name} to {$this->table_name}: " . $wpdb->last_error;
+                }
+            }
+        }
+        
+        // Add indexes to global rules table
+        $global_indexes = array(
+            'idx_is_active' => 'KEY idx_is_active (is_active)',
+            'idx_role_active' => 'KEY idx_role_active (role_name, is_active)',
+            'idx_created_at' => 'KEY idx_created_at (created_at)'
+        );
+        
+        foreach ($global_indexes as $index_name => $index_sql) {
+            if (!$this->index_exists($this->global_table_name, $index_name)) {
+                $result = $wpdb->query("ALTER TABLE {$this->global_table_name} ADD {$index_sql}");
+                if ($result !== false) {
+                    $indexes_added++;
+                } else {
+                    $errors[] = "Failed to add index {$index_name} to {$this->global_table_name}: " . $wpdb->last_error;
+                }
+            }
+        }
+        
+        // Update version if successful
+        if (empty($errors)) {
+            update_option($version_key, $target_version);
+            $this->log_database_event('indexes_added', array(
+                'indexes_added' => $indexes_added,
+                'version' => $target_version
+            ));
+        } else {
+            $this->log_database_event('index_errors', array(
+                'errors' => $errors,
+                'indexes_added' => $indexes_added
+            ));
+        }
+        
+        return empty($errors);
+    }
+
+    /**
+     * Check if a database index exists
+     */
+    private function index_exists($table_name, $index_name) {
+        global $wpdb;
+        
+        $sql = $wpdb->prepare("
+            SELECT COUNT(*) 
+            FROM INFORMATION_SCHEMA.STATISTICS 
+            WHERE TABLE_SCHEMA = %s 
+            AND TABLE_NAME = %s 
+            AND INDEX_NAME = %s
+        ", DB_NAME, $table_name, $index_name);
+        
+        return $wpdb->get_var($sql) > 0;
+    }
+
+    /**
+     * Log database events for troubleshooting
+     */
+    private function log_database_event($event_type, $data) {
+        if (!defined('WP_DEBUG') || !WP_DEBUG) {
+            return;
+        }
+        
+        $log_data = array(
+            'timestamp' => current_time('mysql'),
+            'event_type' => $event_type,
+            'data' => $data
+        );
+        
+        $logs = get_option('maxt_rbp_db_logs', array());
+        $logs[] = $log_data;
+        
+        // Keep only last 20 log entries
+        if (count($logs) > 20) {
+            $logs = array_slice($logs, -20);
+        }
+        
+        update_option('maxt_rbp_db_logs', $logs);
+    }
+
+    /**
+     * Log query performance for monitoring and troubleshooting
+     */
+    private function log_query_performance($query_type, $sql, $execution_time, $result_count) {
+        // Only log slow queries or in debug mode
+        $slow_query_threshold = 0.1; // 100ms
+        $enable_logging = (defined('WP_DEBUG') && WP_DEBUG) || $execution_time > $slow_query_threshold;
+        
+        if (!$enable_logging) {
+            return;
+        }
+        
+        $log_data = array(
+            'timestamp' => current_time('mysql'),
+            'query_type' => $query_type,
+            'sql' => $sql,
+            'execution_time' => round($execution_time, 4),
+            'result_count' => $result_count,
+            'is_slow' => $execution_time > $slow_query_threshold
+        );
+        
+        $logs = get_option('maxt_rbp_query_logs', array());
+        $logs[] = $log_data;
+        
+        // Keep only last 50 log entries
+        if (count($logs) > 50) {
+            $logs = array_slice($logs, -50);
+        }
+        
+        update_option('maxt_rbp_query_logs', $logs);
+        
+        // Log slow queries to error log
+        if ($log_data['is_slow']) {
+            error_log("MaxT RBP Slow Query ({$execution_time}s): {$query_type} - {$sql}");
+        }
+    }
+
+    /**
+     * Get database performance statistics
+     */
+    public function get_database_performance_stats() {
+        $query_logs = get_option('maxt_rbp_query_logs', array());
+        $db_logs = get_option('maxt_rbp_db_logs', array());
+        
+        $stats = array(
+            'total_queries' => count($query_logs),
+            'slow_queries' => 0,
+            'average_execution_time' => 0,
+            'slowest_query_time' => 0,
+            'query_types' => array(),
+            'recent_errors' => array()
+        );
+        
+        if (!empty($query_logs)) {
+            $total_time = 0;
+            $query_type_counts = array();
+            
+            foreach ($query_logs as $log) {
+                $total_time += $log['execution_time'];
+                
+                if ($log['is_slow']) {
+                    $stats['slow_queries']++;
+                }
+                
+                if ($log['execution_time'] > $stats['slowest_query_time']) {
+                    $stats['slowest_query_time'] = $log['execution_time'];
+                }
+                
+                $query_type_counts[$log['query_type']] = ($query_type_counts[$log['query_type']] ?? 0) + 1;
+            }
+            
+            $stats['average_execution_time'] = round($total_time / count($query_logs), 4);
+            $stats['query_types'] = $query_type_counts;
+        }
+        
+        // Get recent database errors
+        foreach (array_reverse($db_logs) as $log) {
+            if ($log['event_type'] === 'index_errors' && count($stats['recent_errors']) < 5) {
+                $stats['recent_errors'][] = $log;
+            }
+        }
+        
+        return $stats;
+    }
+
+    /**
+     * Check database health and index effectiveness
+     */
+    public function check_database_health() {
+        global $wpdb;
+        
+        $health = array(
+            'status' => 'healthy',
+            'issues' => array(),
+            'recommendations' => array(),
+            'index_status' => array()
+        );
+        
+        // Check if indexes exist
+        $required_indexes = array(
+            $this->table_name => array('idx_role_name', 'idx_product_id', 'idx_role_product', 'idx_created_at'),
+            $this->global_table_name => array('idx_role_name', 'idx_is_active', 'idx_role_active', 'idx_created_at')
+        );
+        
+        foreach ($required_indexes as $table => $indexes) {
+            $health['index_status'][$table] = array();
+            foreach ($indexes as $index) {
+                $exists = $this->index_exists($table, $index);
+                $health['index_status'][$table][$index] = $exists;
+                
+                if (!$exists) {
+                    $health['status'] = 'warning';
+                    $health['issues'][] = "Missing index: {$index} on table {$table}";
+                    $health['recommendations'][] = "Run database migration to add missing indexes";
+                }
+            }
+        }
+        
+        // Check for slow queries
+        $performance_stats = $this->get_database_performance_stats();
+        if ($performance_stats['slow_queries'] > 0) {
+            $health['status'] = 'warning';
+            $health['issues'][] = "Found {$performance_stats['slow_queries']} slow queries";
+            $health['recommendations'][] = "Review query logs and consider additional optimizations";
+        }
+        
+        // Check table sizes
+        $table_sizes = $this->get_table_sizes();
+        foreach ($table_sizes as $table => $size) {
+            if ($size > 10000) { // More than 10k rows
+                $health['recommendations'][] = "Table {$table} has {$size} rows - consider archiving old data";
+            }
+        }
+        
+        return $health;
+    }
+
+    /**
+     * Get table row counts
+     */
+    private function get_table_sizes() {
+        global $wpdb;
+        
+        $sizes = array();
+        $sizes[$this->table_name] = $wpdb->get_var("SELECT COUNT(*) FROM {$this->table_name}");
+        $sizes[$this->global_table_name] = $wpdb->get_var("SELECT COUNT(*) FROM {$this->global_table_name}");
+        
+        return $sizes;
     }
 
     public function create_rule($data) {
@@ -115,23 +385,43 @@ class MaxT_RBP_Core {
         global $wpdb;
         $defaults = array('role_name' => '', 'product_id' => '', 'limit' => 0, 'offset' => 0);
         $args = wp_parse_args($args, $defaults);
+        
+        $start_time = microtime(true);
         $where_conditions = array();
         $where_values = array();
-        if (!empty($args['role_name'])) {
+        
+        // Optimize query based on available parameters to leverage indexes
+        if (!empty($args['role_name']) && !empty($args['product_id'])) {
+            // Use compound index (role_name, product_id) for best performance
+            $where_conditions[] = 'role_name = %s AND product_id = %d';
+            $where_values[] = $args['role_name'];
+            $where_values[] = intval($args['product_id']);
+        } elseif (!empty($args['role_name'])) {
+            // Use role_name index
             $where_conditions[] = 'role_name = %s';
             $where_values[] = $args['role_name'];
-        }
-        if (!empty($args['product_id'])) {
+        } elseif (!empty($args['product_id'])) {
+            // Use product_id index
             $where_conditions[] = 'product_id = %d';
             $where_values[] = intval($args['product_id']);
         }
+        
         $where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
         $limit_clause = $args['limit'] > 0 ? 'LIMIT ' . intval($args['offset']) . ', ' . intval($args['limit']) : '';
+        
+        // Use created_at index for ordering
         $sql = "SELECT * FROM {$this->table_name} {$where_clause} ORDER BY created_at DESC {$limit_clause}";
+        
         if (!empty($where_values)) {
             $sql = $wpdb->prepare($sql, $where_values);
         }
-        return $wpdb->get_results($sql, ARRAY_A);
+        
+        $results = $wpdb->get_results($sql, ARRAY_A);
+        
+        // Log query performance for monitoring
+        $this->log_query_performance('get_rules', $sql, microtime(true) - $start_time, count($results));
+        
+        return $results;
     }
 
     public function delete_rule($rule_id) {
@@ -634,9 +924,16 @@ class MaxT_RBP_Core {
     public function get_global_rule($role_name) {
         global $wpdb;
         
+        $start_time = microtime(true);
         
+        // Use compound index (role_name, is_active) for optimal performance
         $sql = "SELECT * FROM {$this->global_table_name} WHERE role_name = %s AND is_active = 1";
-        return $wpdb->get_row($wpdb->prepare($sql, $role_name), ARRAY_A);
+        $result = $wpdb->get_row($wpdb->prepare($sql, $role_name), ARRAY_A);
+        
+        // Log query performance for monitoring
+        $this->log_query_performance('get_global_rule', $sql, microtime(true) - $start_time, $result ? 1 : 0);
+        
+        return $result;
     }
 
     public function get_all_global_rules() {

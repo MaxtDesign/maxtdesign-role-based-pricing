@@ -155,6 +155,9 @@ class MaxT_Role_Based_Pricing {
         // Create custom table for pricing rules
         $core->create_table();
         
+        // Add database indexes for existing installations
+        $core->add_database_indexes();
+        
         // Set default options
         $this->set_default_options();
         
@@ -390,6 +393,9 @@ class MaxT_Role_Based_Pricing {
             'maxt_rbp_cache_method',
             'maxt_rbp_last_cache_clear',
             'maxt_rbp_cache_logs',
+            'maxt_rbp_db_indexes_version',
+            'maxt_rbp_db_logs',
+            'maxt_rbp_query_logs',
         );
 
         foreach ($plugin_options as $option) {
