@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: MaxT Role Based Pricing
- * Plugin URI: https://github.com/[username]/maxt-rbp
+ * Plugin URI: https://github.com/MaxtDesign/maxt-rbp
  * Description: A lightweight WooCommerce plugin that provides role-based pricing with percentage or fixed amount discounts.
  * Version: 1.0.0
- * Author: MaxT
- * Author URI: https://github.com/[username]
+ * Author: MaxtDesign
+ * Author URI: https://maxtdesign.com
  * Text Domain: maxt-rbp
  * Domain Path: /languages
  * Requires at least: 5.0
@@ -30,6 +30,11 @@ define('MAXT_RBP_PLUGIN_FILE', __FILE__);
 define('MAXT_RBP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('MAXT_RBP_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MAXT_RBP_PLUGIN_BASENAME', plugin_basename(__FILE__));
+
+// Define performance monitoring constant if not already defined
+if (!defined('MAXT_RBP_PERFORMANCE_MONITORING')) {
+    define('MAXT_RBP_PERFORMANCE_MONITORING', false);
+}
 
 // Include required files
 require_once MAXT_RBP_PLUGIN_DIR . 'includes/class-core.php';
@@ -125,6 +130,9 @@ class MaxT_Role_Based_Pricing {
         // Initialize plugin components
         $this->init_hooks();
         
+        // Set up automatic performance data cleanup to prevent database bloat
+        add_action('wp_loaded', array($this, 'schedule_performance_cleanup'));
+        
         // Show activation notice
         add_action('admin_notices', array($this, 'activation_notice'));
     }
@@ -135,31 +143,69 @@ class MaxT_Role_Based_Pricing {
     private function init_hooks() {
         // Admin hooks are handled by admin interface class
 
-        // WooCommerce hooks for price calculation - ENABLED for cart functionality
-        // Frontend display filters handle product page display to prevent double discount
-        add_filter('woocommerce_product_get_price', array($this, 'get_role_based_price'), 10, 2);
-        add_filter('woocommerce_product_get_regular_price', array($this, 'get_role_based_regular_price'), 10, 2);
-        add_filter('woocommerce_product_get_sale_price', array($this, 'get_role_based_sale_price'), 10, 2);
-        add_filter('woocommerce_product_variation_get_price', array($this, 'get_role_based_price'), 10, 2);
-        add_filter('woocommerce_product_variation_get_regular_price', array($this, 'get_role_based_regular_price'), 10, 2);
-        add_filter('woocommerce_product_variation_get_sale_price', array($this, 'get_role_based_sale_price'), 10, 2);
+        // Smart hook loading - only register hooks when needed
+        $this->init_smart_hooks();
+    }
+
+    /**
+     * Initialize smart hook loading with conditional registration
+     * IMPROVED: Added comprehensive error handling and clarified hook priority logic
+     */
+    private function init_smart_hooks() {
+        try {
+            // Always register hooks but with higher priority and early returns
+            // This ensures compatibility while optimizing performance
+            
+            // Use priority 50 to run after most plugins but before final output
+            // This allows other plugins to modify prices first, then we apply role-based discounts
+            $hook_priority = 50;
+            
+            add_filter('woocommerce_product_get_price', array($this, 'get_role_based_price'), $hook_priority, 2);
+            add_filter('woocommerce_product_get_regular_price', array($this, 'get_role_based_regular_price'), $hook_priority, 2);
+            add_filter('woocommerce_product_get_sale_price', array($this, 'get_role_based_sale_price'), $hook_priority, 2);
+            add_filter('woocommerce_product_variation_get_price', array($this, 'get_role_based_price'), $hook_priority, 2);
+            add_filter('woocommerce_product_variation_get_regular_price', array($this, 'get_role_based_regular_price'), $hook_priority, 2);
+            add_filter('woocommerce_product_variation_get_sale_price', array($this, 'get_role_based_sale_price'), $hook_priority, 2);
+            
+            // Add performance monitoring hooks if enabled
+            if (defined('MAXT_RBP_PERFORMANCE_MONITORING') && MAXT_RBP_PERFORMANCE_MONITORING) {
+                add_action('wp_footer', array($this, 'log_hook_performance'));
+            }
+            
+        } catch (Exception $e) {
+            // Log hook registration errors
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('MaxT RBP Hook Registration Error: ' . $e->getMessage());
+            }
+        }
     }
 
     /**
      * Plugin activation
+     * PERFORMANCE FIX: Only run database operations on version changes
      */
     public function activate() {
+        // Check if this is a version upgrade
+        $current_version = get_option('maxt_rbp_version', '0');
+        $is_upgrade = version_compare($current_version, MAXT_RBP_VERSION, '<');
+        
         // Initialize core functionality
         $core = new MaxT_RBP_Core();
         
-        // Create custom table for pricing rules
-        $core->create_table();
-        
-        // Add database indexes for existing installations
-        $core->add_database_indexes();
-        
-        // Set default options
-        $this->set_default_options();
+        // Only run database operations on first install or version upgrade
+        if ($is_upgrade || $current_version === '0') {
+            // Create custom table for pricing rules
+            $core->create_table();
+            
+            // Add database indexes for existing installations
+            $core->add_database_indexes();
+            
+            // Set default options
+            $this->set_default_options();
+            
+            // Update version
+            update_option('maxt_rbp_version', MAXT_RBP_VERSION);
+        }
         
         // Set activation notice transient
         set_transient('maxt_rbp_activation_notice', true, 60);
@@ -204,36 +250,54 @@ class MaxT_Role_Based_Pricing {
 
     /**
      * Get role-based price
+     * IMPROVED: Added comprehensive error handling to ensure pricing never breaks
      */
     public function get_role_based_price($price, $product) {
-        if (!$this->core) {
+        try {
+            if (!$this->core) {
+                return $price;
+            }
+            
+            // Early return for invalid price
+            if (!$price || $price <= 0) {
+                return $price;
+            }
+            
+            // Only modify price if user is logged in and has a role
+            if (!is_user_logged_in()) {
+                return $price;
+            }
+            
+            // Cache user's pricing rules status to avoid repeated database queries
+            $user_has_pricing_rules = $this->get_user_pricing_rules_status();
+            if (!$user_has_pricing_rules) {
+                return $price;
+            }
+            
+            $user_role = $this->get_current_user_role();
+            if (!$user_role) {
+                return $price;
+            }
+            
+            // Calculate role-based price
+            $role_price = $this->core->calculate_price($price, $product);
+            
+            // If we have a discount, return the discounted price
+            if ($role_price && $role_price < $price) {
+                return $role_price;
+            }
+            
+            return $price;
+            
+        } catch (Exception $e) {
+            // Log error and return original price to ensure functionality continues
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('MaxT RBP Price Calculation Error: ' . $e->getMessage());
+            }
+            
+            // Always return original price on error to prevent pricing failures
             return $price;
         }
-        
-        // Only modify price if user is logged in and has a role
-        if (!is_user_logged_in()) {
-            return $price;
-        }
-        
-        $user_role = $this->get_current_user_role();
-        if (!$user_role) {
-            return $price;
-        }
-        
-        // Use the current price as the base for calculation
-        if (!$price || $price <= 0) {
-            return $price;
-        }
-        
-        // Calculate role-based price
-        $role_price = $this->core->calculate_price($price, $product);
-        
-        // If we have a discount, return the discounted price
-        if ($role_price && $role_price < $price) {
-            return $role_price;
-        }
-        
-        return $price;
     }
 
     /**
@@ -246,50 +310,233 @@ class MaxT_Role_Based_Pricing {
 
     /**
      * Get role-based sale price - set discounted price as sale price
+     * IMPROVED: Added comprehensive error handling to ensure pricing never breaks
      */
     public function get_role_based_sale_price($price, $product) {
-        if (!$this->core) {
+        try {
+            if (!$this->core) {
+                return $price;
+            }
+            
+            // Only modify sale price if user is logged in and has a role
+            if (!is_user_logged_in()) {
+                return $price;
+            }
+            
+            // Cache user's pricing rules status to avoid repeated database queries
+            $user_has_pricing_rules = $this->get_user_pricing_rules_status();
+            if (!$user_has_pricing_rules) {
+                return $price;
+            }
+            
+            $user_role = $this->get_current_user_role();
+            if (!$user_role) {
+                return $price;
+            }
+            
+            // Get the regular price using proper getter method
+            $regular_price = $product->get_regular_price();
+            if (!$regular_price || $regular_price <= 0) {
+                return $price;
+            }
+            
+            // Calculate role-based price
+            $role_price = $this->core->calculate_price($regular_price, $product);
+            
+            // If we have a discount, set it as the sale price
+            if ($role_price && $role_price < $regular_price) {
+                return $role_price;
+            }
+            
+            return $price;
+            
+        } catch (Exception $e) {
+            // Log error and return original price to ensure functionality continues
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('MaxT RBP Sale Price Calculation Error: ' . $e->getMessage());
+            }
+            
+            // Always return original price on error to prevent pricing failures
             return $price;
         }
-        
-        // Only modify sale price if user is logged in and has a role
-        if (!is_user_logged_in()) {
-            return $price;
-        }
-        
-        $user_role = $this->get_current_user_role();
-        if (!$user_role) {
-            return $price;
-        }
-        
-        // Get the regular price using proper getter method
-        $regular_price = $product->get_regular_price();
-        if (!$regular_price || $regular_price <= 0) {
-            return $price;
-        }
-        
-        // Calculate role-based price
-        $role_price = $this->core->calculate_price($regular_price, $product);
-        
-        // If we have a discount, set it as the sale price
-        if ($role_price && $role_price < $regular_price) {
-            return $role_price;
-        }
-        
-        return $price;
     }
 
 
     /**
-     * Get current user role
+     * Get current user role with caching
      */
     private function get_current_user_role() {
         if (!is_user_logged_in()) {
             return false;
         }
         
+        $user_id = get_current_user_id();
+        if (!$user_id || $user_id <= 0) {
+            return false;
+        }
+        
+        // Cache user role to avoid repeated wp_get_current_user() calls
+        $cache_key = 'maxt_rbp_user_role_' . $user_id;
+        $cached_role = wp_cache_get($cache_key, 'maxt_rbp_user_roles');
+        
+        if ($cached_role !== false) {
+            return $cached_role;
+        }
+        
         $user = wp_get_current_user();
-        return $user->roles[0] ?? false;
+        $role = $user->roles[0] ?? false;
+        
+        // Cache for 5 minutes
+        if ($role) {
+            wp_cache_set($cache_key, $role, 'maxt_rbp_user_roles', 300);
+        }
+        
+        return $role;
+    }
+
+    /**
+     * Get user's pricing rules status with caching
+     * This avoids repeated database queries for the same user
+     * CRITICAL FIX: Now checks BOTH global AND product-specific rules
+     */
+    private function get_user_pricing_rules_status() {
+        if (!is_user_logged_in()) {
+            return false;
+        }
+        
+        $user_id = get_current_user_id();
+        
+        // Input validation for user ID safety
+        if (!$user_id || $user_id <= 0 || !is_numeric($user_id)) {
+            return false;
+        }
+        
+        // Add multisite-safe cache key prefix
+        $site_prefix = is_multisite() ? get_current_blog_id() . '_' : '';
+        $cache_key = 'maxt_rbp_user_has_rules_' . $site_prefix . $user_id;
+        
+        // Check cache first with error handling
+        $cached_status = false;
+        try {
+            $cached_status = wp_cache_get($cache_key, 'maxt_rbp_user_status');
+        } catch (Exception $e) {
+            // Log cache error and continue with database check
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('MaxT RBP Cache Error: ' . $e->getMessage());
+            }
+        }
+        
+        if ($cached_status !== false) {
+            return $cached_status;
+        }
+        
+        // If not cached, check if user has any applicable pricing rules
+        $user_role = $this->get_current_user_role();
+        if (!$user_role) {
+            // Cache negative result for 5 minutes
+            try {
+                wp_cache_set($cache_key, false, 'maxt_rbp_user_status', 300);
+            } catch (Exception $e) {
+                // Cache failed, but continue
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('MaxT RBP Cache Set Error: ' . $e->getMessage());
+                }
+            }
+            return false;
+        }
+        
+        $has_rules = false;
+        
+        try {
+            // Check if there are any global rules for this role
+            $global_rule = $this->core->get_global_rule($user_role);
+            if (!empty($global_rule)) {
+                $has_rules = true;
+            } else {
+                // CRITICAL FIX: Also check for product-specific rules
+                // This was missing and could cause pricing rules to be skipped
+                $product_rules = $this->core->get_rules(array('role_name' => $user_role));
+                if (!empty($product_rules)) {
+                    $has_rules = true;
+                }
+            }
+        } catch (Exception $e) {
+            // Database error - log and return false for safety
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('MaxT RBP Database Error in get_user_pricing_rules_status: ' . $e->getMessage());
+            }
+            return false;
+        }
+        
+        // Cache the result for 5 minutes with error handling
+        try {
+            wp_cache_set($cache_key, $has_rules, 'maxt_rbp_user_status', 300);
+        } catch (Exception $e) {
+            // Cache failed, but continue
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('MaxT RBP Cache Set Error: ' . $e->getMessage());
+            }
+        }
+        
+        return $has_rules;
+    }
+
+    /**
+     * Clear user pricing rules status cache
+     * Called when pricing rules are updated
+     * CRITICAL FIX: Added multisite support and error handling
+     */
+    public function clear_user_pricing_rules_cache($user_id = null) {
+        try {
+            if ($user_id) {
+                // Input validation for user ID
+                if (!$user_id || $user_id <= 0 || !is_numeric($user_id)) {
+                    return;
+                }
+                
+                // Add multisite-safe cache key prefix
+                $site_prefix = is_multisite() ? get_current_blog_id() . '_' : '';
+                $cache_key = 'maxt_rbp_user_has_rules_' . $site_prefix . $user_id;
+                
+                wp_cache_delete($cache_key, 'maxt_rbp_user_status');
+            } else {
+                // Clear all user status cache with compatibility check
+                if (function_exists('wp_cache_flush_group')) {
+                    wp_cache_flush_group('maxt_rbp_user_status');
+                } else {
+                    // Fallback for shared hosting environments
+                    global $wpdb;
+                    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_maxt_rbp_user_%'");
+                    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_maxt_rbp_user_%'");
+                }
+            }
+        } catch (Exception $e) {
+            // Log cache clearing errors
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('MaxT RBP Cache Clear Error: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Log hook execution performance for monitoring
+     */
+    public function log_hook_performance() {
+        if (!defined('MAXT_RBP_PERFORMANCE_MONITORING') || !MAXT_RBP_PERFORMANCE_MONITORING) {
+            return;
+        }
+        
+        $hook_stats = get_transient('maxt_rbp_hook_stats');
+        if (!$hook_stats) {
+            $hook_stats = array();
+        }
+        
+        // Log current page hook execution
+        $current_page = get_queried_object_id();
+        $hook_stats['pages'][$current_page] = ($hook_stats['pages'][$current_page] ?? 0) + 1;
+        $hook_stats['last_updated'] = current_time('mysql');
+        
+        set_transient('maxt_rbp_hook_stats', $hook_stats, 3600); // Cache for 1 hour
     }
 
 
@@ -343,6 +590,23 @@ class MaxT_Role_Based_Pricing {
             ) . '</p>';
             echo '</div>';
             delete_transient('maxt_rbp_activation_notice');
+        }
+    }
+
+    /**
+     * Schedule performance data cleanup to prevent database bloat
+     * PERFORMANCE FIX: Automatically clean up old monitoring data
+     */
+    public function schedule_performance_cleanup() {
+        // Only run cleanup once per day to avoid performance impact
+        $last_cleanup = get_option('maxt_rbp_last_performance_cleanup', 0);
+        $current_time = time();
+        
+        if ($current_time - $last_cleanup > 86400) { // 24 hours
+            if ($this->core) {
+                $this->core->cleanup_performance_data();
+                update_option('maxt_rbp_last_performance_cleanup', $current_time);
+            }
         }
     }
 

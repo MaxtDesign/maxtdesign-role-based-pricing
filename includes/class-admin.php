@@ -40,6 +40,8 @@ class MaxT_RBP_Admin {
         add_action('wp_ajax_maxt_rbp_get_db_health', array($this, 'ajax_get_db_health'));
         add_action('wp_ajax_maxt_rbp_get_db_performance', array($this, 'ajax_get_db_performance'));
         add_action('wp_ajax_maxt_rbp_add_db_indexes', array($this, 'ajax_add_db_indexes'));
+        add_action('wp_ajax_maxt_rbp_get_hook_performance', array($this, 'ajax_get_hook_performance'));
+        add_action('wp_ajax_maxt_rbp_clear_hook_performance', array($this, 'ajax_clear_hook_performance'));
     }
 
     public function add_admin_menu() {
@@ -307,6 +309,11 @@ class MaxT_RBP_Admin {
         // Database Performance Section
         echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Database Performance', 'maxt-rbp') . '</h2>';
         $this->render_database_performance_section();
+        echo '</div>';
+        
+        // Hook Performance Section
+        echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Hook Performance Monitoring', 'maxt-rbp') . '</h2>';
+        $this->render_hook_performance_section();
         echo '</div>';
         
         // Add create default global rules button
@@ -727,6 +734,65 @@ class MaxT_RBP_Admin {
                 location.reload(); // Simple refresh for now
             });
             
+            // Hook Performance JavaScript
+            // Refresh hook statistics
+            $('#maxt-rbp-refresh-hook-stats').on('click', function() {
+                var $button = $(this);
+                $button.prop('disabled', true).text('<?php esc_js(__('Refreshing...', 'maxt-rbp')); ?>');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'maxt_rbp_get_hook_performance',
+                        nonce: cacheNonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            showCacheMessage('<?php esc_js(__('Hook statistics refreshed successfully.', 'maxt-rbp')); ?>', 'success');
+                            setTimeout(function() {
+                                location.reload(); // Reload to show updated stats
+                            }, 1000);
+                        } else {
+                            showCacheMessage(response.data || '<?php esc_js(__('Error refreshing hook statistics.', 'maxt-rbp')); ?>', 'error');
+                        }
+                    },
+                    complete: function() {
+                        $button.prop('disabled', false).text('<?php esc_js(__('Refresh Statistics', 'maxt-rbp')); ?>');
+                    }
+                });
+            });
+            
+            // Clear hook statistics
+            $('#maxt-rbp-clear-hook-stats').on('click', function() {
+                if (!confirm('<?php esc_js(__('Are you sure you want to clear all hook performance statistics?', 'maxt-rbp')); ?>')) return;
+                
+                var $button = $(this);
+                $button.prop('disabled', true).text('<?php esc_js(__('Clearing...', 'maxt-rbp')); ?>');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'maxt_rbp_clear_hook_performance',
+                        nonce: cacheNonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            showCacheMessage(response.data.message, 'success');
+                            setTimeout(function() {
+                                location.reload(); // Reload to show cleared stats
+                            }, 1000);
+                        } else {
+                            showCacheMessage(response.data || '<?php esc_js(__('Error clearing hook statistics.', 'maxt-rbp')); ?>', 'error');
+                        }
+                    },
+                    complete: function() {
+                        $button.prop('disabled', false).text('<?php esc_js(__('Clear Statistics', 'maxt-rbp')); ?>');
+                    }
+                });
+            });
+            
             // Helper functions
             function showCacheMessage(message, type) {
                 var className = type === 'success' ? 'notice-success' : 'notice-error';
@@ -810,30 +876,64 @@ class MaxT_RBP_Admin {
         if (!current_user_can('manage_woocommerce')) {
             wp_die(__('Insufficient permissions.', 'maxt-rbp'));
         }
-        $product_id = intval($_POST['product_id']);
-        $role_name = sanitize_text_field($_POST['role_name']);
-        $discount_type = sanitize_text_field($_POST['discount_type']);
-        $discount_value = floatval($_POST['discount_value']);
         
-        if (empty($role_name) || empty($discount_type) || $discount_value <= 0) {
-            wp_send_json_error(__('Please fill in all fields with valid values.', 'maxt-rbp'));
+        // SECURITY: Enhanced input validation and sanitization
+        $product_id = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
+        $role_name = isset($_POST['role_name']) ? sanitize_text_field($_POST['role_name']) : '';
+        $discount_type = isset($_POST['discount_type']) ? sanitize_text_field($_POST['discount_type']) : '';
+        $discount_value = isset($_POST['discount_value']) ? floatval($_POST['discount_value']) : 0;
+        
+        // Validate product ID
+        if ($product_id <= 0) {
+            wp_send_json_error(__('Invalid product ID.', 'maxt-rbp'));
         }
+        
+        // Validate role name
+        if (empty($role_name) || strlen($role_name) > 100) {
+            wp_send_json_error(__('Invalid role name.', 'maxt-rbp'));
+        }
+        
+        // Validate discount type
         if (!in_array($discount_type, array('percentage', 'fixed'))) {
             wp_send_json_error(__('Invalid discount type.', 'maxt-rbp'));
         }
+        
+        // Validate discount value
+        if ($discount_value <= 0) {
+            wp_send_json_error(__('Discount value must be greater than 0.', 'maxt-rbp'));
+        }
+        
         if ($discount_type === 'percentage' && $discount_value > 100) {
             wp_send_json_error(__('Percentage discount cannot exceed 100%.', 'maxt-rbp'));
         }
         
-        $rule_data = array('role_name' => $role_name, 'product_id' => $product_id, 'discount_type' => $discount_type, 'discount_value' => $discount_value);
-        $rule_id = $this->core->create_rule($rule_data);
+        // Additional security: Check if product exists
+        if (!wc_get_product($product_id)) {
+            wp_send_json_error(__('Product not found.', 'maxt-rbp'));
+        }
         
-        if ($rule_id) {
-            $this->core->clear_product_cache($product_id);
-            do_action('maxt_rbp_after_rule_created', $rule_id, $rule_data);
-            wp_send_json_success(__('Pricing rule added successfully.', 'maxt-rbp'));
-        } else {
-            wp_send_json_error(__('Failed to add pricing rule. Please check your input values.', 'maxt-rbp'));
+        $rule_data = array(
+            'role_name' => $role_name, 
+            'product_id' => $product_id, 
+            'discount_type' => $discount_type, 
+            'discount_value' => $discount_value
+        );
+        
+        try {
+            $rule_id = $this->core->create_rule($rule_data);
+            
+            if ($rule_id) {
+                $this->core->clear_product_cache($product_id);
+                do_action('maxt_rbp_after_rule_created', $rule_id, $rule_data);
+                wp_send_json_success(__('Pricing rule added successfully.', 'maxt-rbp'));
+            } else {
+                wp_send_json_error(__('Failed to add pricing rule. Please check your input values.', 'maxt-rbp'));
+            }
+        } catch (Exception $e) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('MaxT RBP AJAX Add Rule Error: ' . $e->getMessage());
+            }
+            wp_send_json_error(__('An error occurred while adding the pricing rule.', 'maxt-rbp'));
         }
     }
 
@@ -1136,6 +1236,15 @@ class MaxT_RBP_Admin {
         echo '<table class="widefat"><tbody>';
         echo '<tr><td><strong>' . esc_html__('Cache Method', 'maxt-rbp') . '</strong></td><td>' . esc_html(ucfirst($cache_health['method'])) . '</td></tr>';
         echo '<tr><td><strong>' . esc_html__('Object Cache Available', 'maxt-rbp') . '</strong></td><td>' . ($cache_health['object_cache_available'] ? '<span style="color: green;">' . esc_html__('Yes', 'maxt-rbp') . '</span>' : '<span style="color: red;">' . esc_html__('No', 'maxt-rbp') . '</span>') . '</td></tr>';
+        
+        // Show object cache health status
+        $cache_health_status = isset($cache_health['object_cache_healthy']) ? $cache_health['object_cache_healthy'] : false;
+        echo '<tr><td><strong>' . esc_html__('Object Cache Health', 'maxt-rbp') . '</strong></td><td>' . ($cache_health_status ? '<span style="color: green;">' . esc_html__('Healthy', 'maxt-rbp') . '</span>' : '<span style="color: orange;">' . esc_html__('Unhealthy/Fallback Active', 'maxt-rbp') . '</span>') . '</td></tr>';
+        
+        // Show fallback cache status
+        $fallback_active = isset($cache_health['fallback_active']) ? $cache_health['fallback_active'] : false;
+        echo '<tr><td><strong>' . esc_html__('Fallback Cache Active', 'maxt-rbp') . '</strong></td><td>' . ($fallback_active ? '<span style="color: orange;">' . esc_html__('Yes', 'maxt-rbp') . '</span>' : '<span style="color: green;">' . esc_html__('No', 'maxt-rbp') . '</span>') . '</td></tr>';
+        
         echo '<tr><td><strong>' . esc_html__('Estimated Cache Entries', 'maxt-rbp') . '</strong></td><td>' . esc_html($cache_health['estimated_entries']) . '</td></tr>';
         echo '<tr><td><strong>' . esc_html__('Last Cache Clear', 'maxt-rbp') . '</strong></td><td>' . esc_html($cache_health['last_cleared'] ?: esc_html__('Never', 'maxt-rbp')) . '</td></tr>';
         echo '</tbody></table>';
@@ -1516,5 +1625,83 @@ class MaxT_RBP_Admin {
         } else {
             wp_send_json_error(__('Failed to add database indexes. Check error logs for details.', 'maxt-rbp'));
         }
+    }
+
+    /**
+     * Render hook performance monitoring section
+     */
+    private function render_hook_performance_section() {
+        $hook_stats = $this->core->get_hook_performance_stats();
+        $monitoring_enabled = defined('MAXT_RBP_PERFORMANCE_MONITORING') && MAXT_RBP_PERFORMANCE_MONITORING;
+        
+        echo '<div class="maxt-rbp-hook-performance">';
+        echo '<h3>' . esc_html__('Performance Monitoring Status', 'maxt-rbp') . '</h3>';
+        
+        if ($monitoring_enabled) {
+            echo '<div class="notice notice-success inline">';
+            echo '<p><strong>' . esc_html__('Status:', 'maxt-rbp') . '</strong> ' . esc_html__('Enabled', 'maxt-rbp') . '</p>';
+            echo '</div>';
+        } else {
+            echo '<div class="notice notice-warning inline">';
+            echo '<p><strong>' . esc_html__('Status:', 'maxt-rbp') . '</strong> ' . esc_html__('Disabled', 'maxt-rbp') . '</p>';
+            echo '<p>' . esc_html__('To enable performance monitoring, add this to your wp-config.php:', 'maxt-rbp') . '</p>';
+            echo '<code>define(\'MAXT_RBP_PERFORMANCE_MONITORING\', true);</code>';
+            echo '</div>';
+        }
+        
+        echo '<h4>' . esc_html__('Hook Execution Statistics', 'maxt-rbp') . '</h4>';
+        echo '<table class="widefat"><tbody>';
+        echo '<tr><td><strong>' . esc_html__('Total Pages Monitored', 'maxt-rbp') . '</strong></td><td>' . esc_html($hook_stats['total_pages']) . '</td></tr>';
+        echo '<tr><td><strong>' . esc_html__('Last Updated', 'maxt-rbp') . '</strong></td><td>' . esc_html($hook_stats['last_updated'] ?: esc_html__('Never', 'maxt-rbp')) . '</td></tr>';
+        echo '</tbody></table>';
+        
+        if (!empty($hook_stats['most_accessed_pages'])) {
+            echo '<h4>' . esc_html__('Most Accessed Pages', 'maxt-rbp') . '</h4>';
+            echo '<table class="widefat"><thead><tr><th>' . esc_html__('Page ID', 'maxt-rbp') . '</th><th>' . esc_html__('Hook Executions', 'maxt-rbp') . '</th></tr></thead><tbody>';
+            foreach ($hook_stats['most_accessed_pages'] as $page_id => $count) {
+                $page_title = get_the_title($page_id) ?: __('Unknown Page', 'maxt-rbp');
+                echo '<tr><td>' . esc_html($page_id) . ' - ' . esc_html($page_title) . '</td><td>' . esc_html($count) . '</td></tr>';
+            }
+            echo '</tbody></table>';
+        }
+        
+        echo '<div class="maxt-rbp-hook-actions">';
+        echo '<h4>' . esc_html__('Hook Performance Actions', 'maxt-rbp') . '</h4>';
+        echo '<p>';
+        echo '<button type="button" class="button" id="maxt-rbp-refresh-hook-stats">' . esc_html__('Refresh Statistics', 'maxt-rbp') . '</button> ';
+        echo '<button type="button" class="button" id="maxt-rbp-clear-hook-stats">' . esc_html__('Clear Statistics', 'maxt-rbp') . '</button>';
+        echo '</p>';
+        echo '</div>';
+        echo '</div>';
+    }
+
+    /**
+     * AJAX handler for getting hook performance statistics
+     */
+    public function ajax_get_hook_performance() {
+        check_ajax_referer('maxt_rbp_cache_action', 'nonce');
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+        }
+        
+        $hook_stats = $this->core->get_hook_performance_stats();
+        wp_send_json_success($hook_stats);
+    }
+
+    /**
+     * AJAX handler for clearing hook performance statistics
+     */
+    public function ajax_clear_hook_performance() {
+        check_ajax_referer('maxt_rbp_cache_action', 'nonce');
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+        }
+        
+        $this->core->clear_hook_performance_stats();
+        
+        wp_send_json_success(array(
+            'message' => __('Hook performance statistics cleared successfully.', 'maxt-rbp'),
+            'timestamp' => current_time('mysql')
+        ));
     }
 }
