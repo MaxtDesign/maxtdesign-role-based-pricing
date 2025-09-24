@@ -1,0 +1,68 @@
+/**
+ * Frontend styles for MaxT Role Based Pricing
+ *
+ * @package MaxT_RBP
+ */
+
+/* Role-based pricing display */
+.maxt-rbp-price {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
+
+.maxt-rbp-price .maxt-rbp-original {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 0.9em;
+    margin-right: 8px;
+}
+
+.maxt-rbp-price .maxt-rbp-member {
+    color: #d63638;
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 1.1em;
+}
+
+/* Ensure proper spacing and alignment */
+.maxt-rbp-price del {
+    margin-right: 8px;
+}
+
+.maxt-rbp-price ins {
+    text-decoration: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .maxt-rbp-price .maxt-rbp-original {
+        font-size: 0.85em;
+        margin-right: 6px;
+    }
+
+    .maxt-rbp-price .maxt-rbp-member {
+        font-size: 1.05em;
+    }
+}
+
+/* Integration with WooCommerce price display */
+.woocommerce .maxt-rbp-price,
+.woocommerce-page .maxt-rbp-price {
+    display: inline-block;
+}
+
+/* Ensure compatibility with theme price styling */
+.price .maxt-rbp-price,
+.woocommerce-Price-amount .maxt-rbp-price {
+    display: inline;
+}
+
+/* Hide original WooCommerce price when role pricing is shown */
+.maxt-rbp-price-active .price {
+    display: none;
+}
+
+.maxt-rbp-price-active .woocommerce-Price-amount {
+    display: none;
+}
