@@ -1,6 +1,6 @@
 <?php
 /**
- * Uninstall script for MaxT Role Based Pricing
+ * Uninstall script for WooCommerce Role-Based Pricing
  * 
  * This file is executed when the plugin is deleted via WordPress admin.
  * It performs a complete cleanup of all plugin data.
@@ -52,4 +52,4 @@ $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_ti
 wp_cache_flush();
 
 // Log uninstall
-error_log('MaxT Role Based Pricing plugin uninstalled - all data cleaned up');
+error_log('WooCommerce Role-Based Pricing plugin uninstalled - all data cleaned up');

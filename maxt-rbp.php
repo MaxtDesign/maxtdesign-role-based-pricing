@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: MaxT Role Based Pricing
- * Plugin URI: https://github.com/MaxtDesign/maxt-rbp
- * Description: A lightweight WooCommerce plugin that provides role-based pricing with percentage or fixed amount discounts.
+ * Plugin Name: WooCommerce Role-Based Pricing
+ * Plugin URI: https://wordpress.org/plugins/woocommerce-role-based-pricing
+ * Description: Professional role-based pricing for WooCommerce. Set different prices for different user roles with percentage or fixed discounts.
  * Version: 1.0.0
  * Author: MaxtDesign
  * Author URI: https://maxtdesign.com
@@ -42,7 +42,7 @@ require_once MAXT_RBP_PLUGIN_DIR . 'includes/class-admin.php';
 require_once MAXT_RBP_PLUGIN_DIR . 'includes/class-frontend.php';
 
 /**
- * Main MaxT Role Based Pricing Class
+ * Main WooCommerce Role-Based Pricing Class
  */
 class MaxT_Role_Based_Pricing {
 
@@ -698,11 +698,11 @@ class MaxT_Role_Based_Pricing {
     public function activation_notice() {
         if (get_transient('maxt_rbp_activation_notice')) {
             echo '<div class="notice notice-success is-dismissible">';
-            echo '<p><strong>' . esc_html__('MaxT Role Based Pricing', 'maxt-rbp') . '</strong> ' . 
+            echo '<p><strong>' . esc_html__('WooCommerce Role-Based Pricing', 'maxt-rbp') . '</strong> ' . 
                  esc_html__('has been activated!', 'maxt-rbp') . '</p>';
             echo '<p>' . sprintf(
                 esc_html__('Go to %s to create custom roles and set up pricing rules.', 'maxt-rbp'),
-                '<a href="' . admin_url('admin.php?page=maxt-role-pricing') . '">' . esc_html__('WooCommerce > MaxT Role Pricing', 'maxt-rbp') . '</a>'
+                '<a href="' . admin_url('admin.php?page=maxt-role-pricing') . '">' . esc_html__('WooCommerce > Role-Based Pricing', 'maxt-rbp') . '</a>'
             ) . '</p>';
             echo '</div>';
             delete_transient('maxt_rbp_activation_notice');
@@ -730,7 +730,7 @@ class MaxT_Role_Based_Pricing {
      * WooCommerce missing notice
      */
     public function woocommerce_missing_notice() {
-        echo '<div class="error"><p><strong>' . esc_html__('MaxT Role Based Pricing', 'maxt-rbp') . '</strong> ' . 
+        echo '<div class="error"><p><strong>' . esc_html__('WooCommerce Role-Based Pricing', 'maxt-rbp') . '</strong> ' . 
              esc_html__('requires WooCommerce to be installed and active.', 'maxt-rbp') . '</p></div>';
     }
 
