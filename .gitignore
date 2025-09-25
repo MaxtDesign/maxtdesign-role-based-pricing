@@ -17,6 +17,7 @@ wp-content/cache/
 wp-content/cache/supercache/
 
 # Plugin development ignores
+.cursor/
 .DS_Store
 Thumbs.db
 *.log
