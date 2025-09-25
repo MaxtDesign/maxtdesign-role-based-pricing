@@ -1,6 +1,6 @@
-# MaxT Role Based Pricing
+# WooCommerce Role-Based Pricing
 
-A lightweight WooCommerce plugin that provides role-based pricing with percentage or fixed amount discounts.
+Professional role-based pricing for WooCommerce. Set different prices for different user roles with percentage or fixed discounts.
 
 ## Features
 
@@ -23,13 +23,13 @@ A lightweight WooCommerce plugin that provides role-based pricing with percentag
 1. Download the plugin files
 2. Upload the `maxt-rbp` folder to `/wp-content/plugins/`
 3. Activate the plugin through the 'Plugins' menu in WordPress
-4. Go to **WooCommerce > MaxT Role Pricing** to configure
+4. Go to **WooCommerce > Role-Based Pricing** to configure
 
 ## Usage
 
 ### Creating Custom Roles
 
-1. Go to **WooCommerce > MaxT Role Pricing**
+1. Go to **WooCommerce > Role-Based Pricing**
 2. In the "Role Management" section, fill out the role creation form:
    - **Role Name**: Enter a name (e.g., "premium")
    - **Display Name**: Enter a display name (e.g., "Premium Customer")
@@ -44,7 +44,7 @@ A lightweight WooCommerce plugin that provides role-based pricing with percentag
 4. Click "Add Pricing Rule"
 
 #### Method 2: Settings Page
-1. Go to **WooCommerce > MaxT Role Pricing**
+1. Go to **WooCommerce > Role-Based Pricing**
 2. View the "Pricing Rules Overview" section
 3. Rules are managed through individual product pages
 

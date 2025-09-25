@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin interface for MaxT Role Based Pricing
+ * Admin interface for WooCommerce Role-Based Pricing
  *
  * @package MaxT_RBP
  */
@@ -45,7 +45,7 @@ class MaxT_RBP_Admin {
     }
 
     public function add_admin_menu() {
-        add_submenu_page('woocommerce', __('MaxT Role Pricing', 'maxt-rbp'), __('MaxT Role Pricing', 'maxt-rbp'), 'manage_woocommerce', 'maxt-role-pricing', array($this, 'settings_page'));
+        add_submenu_page('woocommerce', __('Role-Based Pricing', 'maxt-rbp'), __('Role-Based Pricing', 'maxt-rbp'), 'manage_woocommerce', 'maxt-role-pricing', array($this, 'settings_page'));
     }
 
     public function add_product_meta_box() {
@@ -299,7 +299,7 @@ class MaxT_RBP_Admin {
             }
         }
 
-        echo '<div class="wrap"><h1>' . esc_html__('MaxT Role Pricing Settings', 'maxt-rbp') . '</h1>';
+        echo '<div class="wrap"><h1>' . esc_html__('Role-Based Pricing Settings', 'maxt-rbp') . '</h1>';
         
         // === TOP SECTIONS: Role Management and Pricing ===
         

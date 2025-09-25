@@ -1,6 +1,6 @@
 <?php
 /**
- * Frontend functionality for MaxT Role Based Pricing
+ * Frontend functionality for WooCommerce Role-Based Pricing
  *
  * @package MaxT_RBP
  */
