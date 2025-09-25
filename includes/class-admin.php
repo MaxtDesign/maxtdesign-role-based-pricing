@@ -301,19 +301,27 @@ class MaxT_RBP_Admin {
 
         echo '<div class="wrap"><h1>' . esc_html__('MaxT Role Pricing Settings', 'maxt-rbp') . '</h1>';
         
-        // Enhanced Cache Management Section
-        echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Cache Management', 'maxt-rbp') . '</h2>';
-        $this->render_cache_management_section();
-        echo '</div>';
+        // === TOP SECTIONS: Role Management and Pricing ===
         
-        // Database Performance Section
-        echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Database Performance', 'maxt-rbp') . '</h2>';
-        $this->render_database_performance_section();
-        echo '</div>';
+        // Role Management Section
+        echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Role Management', 'maxt-rbp') . '</h2>';
         
-        // Hook Performance Section
-        echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Hook Performance Monitoring', 'maxt-rbp') . '</h2>';
-        $this->render_hook_performance_section();
+        $all_roles = $this->core->get_all_roles();
+        echo '<h3>' . esc_html__('Current Roles', 'maxt-rbp') . '</h3>';
+        echo '<table class="wp-list-table widefat fixed striped"><thead><tr><th>' . esc_html__('Role Name', 'maxt-rbp') . '</th><th>' . esc_html__('Display Name', 'maxt-rbp') . '</th><th>' . esc_html__('Type', 'maxt-rbp') . '</th><th>' . esc_html__('Users', 'maxt-rbp') . '</th><th>' . esc_html__('Actions', 'maxt-rbp') . '</th></tr></thead><tbody>';
+        foreach ($all_roles as $role_name => $role_data) {
+            echo '<tr><td><code>' . esc_html($role_name) . '</code></td><td>' . esc_html($role_data['display_name']) . '</td><td>' . ($role_data['is_custom'] ? '<span class="dashicons dashicons-admin-users"></span> ' . esc_html__('Custom', 'maxt-rbp') : '<span class="dashicons dashicons-wordpress"></span> ' . esc_html__('Built-in', 'maxt-rbp')) . '</td><td>' . esc_html($role_data['user_count']) . '</td><td>';
+            if ($role_data['is_custom'] && $role_data['user_count'] === 0) {
+                echo '<a href="?page=maxt-role-pricing&action=delete_role&role=' . urlencode($role_name) . '&_wpnonce=' . wp_create_nonce('delete_role_' . $role_name) . '" class="button button-small" onclick="return confirm(\'' . esc_js(__('Are you sure you want to delete this role?', 'maxt-rbp')) . '\')">' . esc_html__('Delete', 'maxt-rbp') . '</a>';
+            } else {
+                echo '<span class="description">' . esc_html__('No actions available', 'maxt-rbp') . '</span>';
+            }
+            echo '</td></tr>';
+        }
+        echo '</tbody></table>';
+        
+        echo '<h3>' . esc_html__('Create New Role', 'maxt-rbp') . '</h3>';
+        echo $this->render_role_creation_form();
         echo '</div>';
         
         // Add create default global rules button
@@ -355,29 +363,7 @@ class MaxT_RBP_Admin {
         $this->render_global_rule_form();
         echo '</div>';
         
-        // Add edit modal
-        $this->render_edit_modal();
-        
-        echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Role Management', 'maxt-rbp') . '</h2>';
-        
-        $all_roles = $this->core->get_all_roles();
-        echo '<h3>' . esc_html__('Current Roles', 'maxt-rbp') . '</h3>';
-        echo '<table class="wp-list-table widefat fixed striped"><thead><tr><th>' . esc_html__('Role Name', 'maxt-rbp') . '</th><th>' . esc_html__('Display Name', 'maxt-rbp') . '</th><th>' . esc_html__('Type', 'maxt-rbp') . '</th><th>' . esc_html__('Users', 'maxt-rbp') . '</th><th>' . esc_html__('Actions', 'maxt-rbp') . '</th></tr></thead><tbody>';
-        foreach ($all_roles as $role_name => $role_data) {
-            echo '<tr><td><code>' . esc_html($role_name) . '</code></td><td>' . esc_html($role_data['display_name']) . '</td><td>' . ($role_data['is_custom'] ? '<span class="dashicons dashicons-admin-users"></span> ' . esc_html__('Custom', 'maxt-rbp') : '<span class="dashicons dashicons-wordpress"></span> ' . esc_html__('Built-in', 'maxt-rbp')) . '</td><td>' . esc_html($role_data['user_count']) . '</td><td>';
-            if ($role_data['is_custom'] && $role_data['user_count'] === 0) {
-                echo '<a href="?page=maxt-role-pricing&action=delete_role&role=' . urlencode($role_name) . '&_wpnonce=' . wp_create_nonce('delete_role_' . $role_name) . '" class="button button-small" onclick="return confirm(\'' . esc_js(__('Are you sure you want to delete this role?', 'maxt-rbp')) . '\')">' . esc_html__('Delete', 'maxt-rbp') . '</a>';
-            } else {
-                echo '<span class="description">' . esc_html__('No actions available', 'maxt-rbp') . '</span>';
-            }
-            echo '</td></tr>';
-        }
-        echo '</tbody></table>';
-        
-        echo '<h3>' . esc_html__('Create New Role', 'maxt-rbp') . '</h3>';
-        echo $this->render_role_creation_form();
-        echo '</div>';
-        
+        // Pricing Rules Overview Section
         $all_rules = $this->core->get_rules();
         echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Pricing Rules Overview', 'maxt-rbp') . '</h2>';
         if (empty($all_rules)) {
@@ -394,7 +380,46 @@ class MaxT_RBP_Admin {
             }
             echo '</tbody></table>';
         }
-        echo '</div></div>';
+        echo '</div>';
+        
+        // Add edit modal
+        $this->render_edit_modal();
+        
+        // === BOTTOM SECTIONS: Cache Management and Performance Monitoring ===
+        
+        // Enhanced Cache Management Section
+        echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Cache Management', 'maxt-rbp') . '</h2>';
+        $this->render_cache_management_section();
+        echo '</div>';
+        
+        // Performance Monitoring Sections - Conditionally rendered based on monitoring status
+        if (defined('MAXT_RBP_PERFORMANCE_MONITORING') && MAXT_RBP_PERFORMANCE_MONITORING) {
+            // Show actual performance sections when monitoring is enabled
+            echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Database Performance', 'maxt-rbp') . '</h2>';
+            $this->render_database_performance_section();
+            echo '</div>';
+            
+            echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Hook Performance Monitoring', 'maxt-rbp') . '</h2>';
+            $this->render_hook_performance_section();
+            echo '</div>';
+        } else {
+            // Show informative message when monitoring is disabled
+            echo '<div class="maxt-rbp-settings-section">';
+            echo '<div class="notice notice-info inline">';
+            echo '<h3>' . esc_html__('Performance Monitoring', 'maxt-rbp') . '</h3>';
+            echo '<p>' . esc_html__('Performance monitoring is currently disabled to optimize plugin performance.', 'maxt-rbp') . '</p>';
+            echo '<p><strong>' . esc_html__('To enable detailed performance statistics:', 'maxt-rbp') . '</strong></p>';
+            echo '<ol>';
+            echo '<li>' . esc_html__('Add this line to your wp-config.php file:', 'maxt-rbp') . '</li>';
+            echo '<li><code>define(\'MAXT_RBP_PERFORMANCE_MONITORING\', true);</code></li>';
+            echo '<li>' . esc_html__('Save the file and reload this page', 'maxt-rbp') . '</li>';
+            echo '</ol>';
+            echo '<p><em>' . esc_html__('Note: Performance monitoring is intended for development and troubleshooting purposes.', 'maxt-rbp') . '</em></p>';
+            echo '</div>';
+            echo '</div>';
+        }
+        
+        echo '</div>';
         
         // Add JavaScript for global rules and cache management
         ?>
@@ -698,7 +723,8 @@ class MaxT_RBP_Admin {
                 updateCacheStatus();
             });
             
-            // Database Performance JavaScript
+            <?php if (defined('MAXT_RBP_PERFORMANCE_MONITORING') && MAXT_RBP_PERFORMANCE_MONITORING): ?>
+            // Database Performance JavaScript - Only load when monitoring is enabled
             // Add missing indexes
             $('#maxt-rbp-add-db-indexes').on('click', function() {
                 if (!confirm('<?php esc_js(__('Are you sure you want to add missing database indexes?', 'maxt-rbp')); ?>')) return;
@@ -734,7 +760,7 @@ class MaxT_RBP_Admin {
                 location.reload(); // Simple refresh for now
             });
             
-            // Hook Performance JavaScript
+            // Hook Performance JavaScript - Only load when monitoring is enabled
             // Refresh hook statistics
             $('#maxt-rbp-refresh-hook-stats').on('click', function() {
                 var $button = $(this);
@@ -792,6 +818,7 @@ class MaxT_RBP_Admin {
                     }
                 });
             });
+            <?php endif; ?>
             
             // Helper functions
             function showCacheMessage(message, type) {
