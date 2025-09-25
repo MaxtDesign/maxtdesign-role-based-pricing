@@ -9,7 +9,7 @@
  * Text Domain: maxt-rbp
  * Domain Path: /languages
  * Requires at least: 5.0
- * Tested up to: 6.4
+ * Tested up to: 6.8
  * Requires PHP: 7.4
  * WC requires at least: 5.0
  * WC tested up to: 8.5
@@ -281,6 +281,9 @@ class MaxT_Role_Based_Pricing {
                 return $price;
             }
             
+            // Note: Variable products (parent) will return original price, but variations will get discounted prices
+            // This allows WooCommerce to calculate discounted price ranges from the variation prices
+            
             // Only modify price if user is logged in and has a role
             if (!is_user_logged_in()) {
                 return $price;
@@ -342,6 +345,11 @@ class MaxT_Role_Based_Pricing {
         try {
             if (!$product || !$this->core) {
                 return $price_html;
+            }
+            
+            // Handle variable products - calculate discounted price range
+            if ($product->is_type('variable')) {
+                return $this->format_variable_product_discounted_range($price_html, $product);
             }
             
             // Early return if no discounts have been applied during this request
@@ -464,7 +472,88 @@ class MaxT_Role_Based_Pricing {
         }
     }
 
-
+    /**
+     * Format variable product discounted price range
+     * NEW FEATURE: Shows discounted price ranges for variable products instead of original ranges
+     */
+    private function format_variable_product_discounted_range($price_html, $product) {
+        try {
+            // Only apply to logged-in users with pricing rules
+            if (!is_user_logged_in()) {
+                return $price_html;
+            }
+            
+            $user_has_pricing_rules = $this->get_user_pricing_rules_status();
+            if (!$user_has_pricing_rules) {
+                return $price_html;
+            }
+            
+            // Get all available variations
+            $variations = $product->get_available_variations();
+            if (empty($variations)) {
+                return $price_html;
+            }
+            
+            $min_price = PHP_INT_MAX;
+            $max_price = 0;
+            $has_discounted_variations = false;
+            
+            // Loop through variations to find min and max discounted prices
+            foreach ($variations as $variation_data) {
+                $variation_id = $variation_data['variation_id'];
+                $variation_product = wc_get_product($variation_id);
+                
+                if (!$variation_product || !$variation_product->exists()) {
+                    continue;
+                }
+                
+                // Get the current price (which should already be discounted by get_role_based_price)
+                $current_price = $variation_product->get_price();
+                if (!$current_price || $current_price <= 0) {
+                    continue;
+                }
+                
+                // Get the original price from our in-memory storage to check if discount was applied
+                $original_price = isset(self::$original_prices[$variation_id]) ? self::$original_prices[$variation_id] : $current_price;
+                
+                // Use the current price (already discounted) as the discounted price
+                $discounted_price = $current_price;
+                
+                // Only include variations that have discounts
+                if ($discounted_price && $discounted_price < $original_price) {
+                    $has_discounted_variations = true;
+                    
+                    // Update min and max prices
+                    if ($discounted_price < $min_price) {
+                        $min_price = $discounted_price;
+                    }
+                    if ($discounted_price > $max_price) {
+                        $max_price = $discounted_price;
+                    }
+                }
+            }
+            
+            // If no variations have discounts, return original price HTML
+            if (!$has_discounted_variations || $min_price === PHP_INT_MAX || $max_price === 0) {
+                return $price_html;
+            }
+            
+            // Format the discounted price range
+            if ($min_price === $max_price) {
+                return wc_price($min_price);
+            } else {
+                return wc_price($min_price) . ' - ' . wc_price($max_price);
+            }
+            
+        } catch (Exception $e) {
+            // Log error and return original price HTML to ensure functionality continues
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('MaxT RBP Variable Product Price Range Error: ' . $e->getMessage());
+            }
+            
+            return $price_html;
+        }
+    }
 
     /**
      * Get current user role with caching
