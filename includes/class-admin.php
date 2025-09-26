@@ -80,7 +80,7 @@ class MaxT_RBP_Admin {
                 
                 $status_display = $has_override ? '<span style="color: orange;">' . __('Overridden', 'maxt-rbp') . '</span>' : '<span style="color: green;">' . __('Active', 'maxt-rbp') . '</span>';
                 
-                echo '<tr><td>' . esc_html($role_display_name) . '</td><td>' . esc_html($discount_type_display) . '</td><td>' . $discount_value_display . '</td><td>' . $status_display . '</td></tr>';
+                echo '<tr><td>' . esc_html($role_display_name) . '</td><td>' . esc_html($discount_type_display) . '</td><td>' . esc_html($discount_value_display) . '</td><td>' . esc_html($status_display) . '</td></tr>';
             }
             echo '</tbody></table><br>';
         }
@@ -93,7 +93,7 @@ class MaxT_RBP_Admin {
                 $role_display_name = $this->get_role_display_name($rule['role_name']);
                 $discount_type_display = $rule['discount_type'] === 'percentage' ? __('Percentage', 'maxt-rbp') : __('Fixed Amount', 'maxt-rbp');
                 $discount_value_display = $rule['discount_type'] === 'percentage' ? $rule['discount_value'] . '%' : wc_price($rule['discount_value']);
-                echo '<tr><td>' . esc_html($role_display_name) . '</td><td>' . esc_html($discount_type_display) . '</td><td>' . $discount_value_display . '</td><td>';
+                echo '<tr><td>' . esc_html($role_display_name) . '</td><td>' . esc_html($discount_type_display) . '</td><td>' . esc_html($discount_value_display) . '</td><td>';
                 echo '<button type="button" class="button button-small maxt-rbp-edit-product-rule" data-rule-id="' . esc_attr($rule['id']) . '" data-role-name="' . esc_attr($rule['role_name']) . '" data-discount-type="' . esc_attr($rule['discount_type']) . '" data-discount-value="' . esc_attr($rule['discount_value']) . '">' . esc_html__('Edit', 'maxt-rbp') . '</button> ';
                 echo '<a href="#" class="button button-small maxt-rbp-delete-rule" data-rule-id="' . esc_attr($rule['id']) . '">' . esc_html__('Delete', 'maxt-rbp') . '</a>';
                 echo '</td></tr>';
@@ -142,7 +142,7 @@ class MaxT_RBP_Admin {
                         role_name: roleName,
                         discount_type: discountType,
                         discount_value: discountValue,
-                        nonce: '<?php echo wp_create_nonce('maxt_rbp_add_rule'); ?>'
+                        nonce: '<?php echo esc_attr(wp_create_nonce('maxt_rbp_add_rule')); ?>'
                     },
                     success: function(response) {
                         if (response.success) {
@@ -164,7 +164,7 @@ class MaxT_RBP_Admin {
                     data: {
                         action: 'maxt_rbp_delete_rule',
                         rule_id: ruleId,
-                        nonce: '<?php echo wp_create_nonce('maxt_rbp_delete_rule'); ?>'
+                        nonce: '<?php echo esc_attr(wp_create_nonce('maxt_rbp_delete_rule')); ?>'
                     },
                     success: function(response) {
                         if (response.success) {
@@ -218,7 +218,7 @@ class MaxT_RBP_Admin {
                         rule_id: ruleId,
                         discount_type: newDiscountType,
                         discount_value: newDiscountValue,
-                        nonce: '<?php echo wp_create_nonce('maxt_rbp_add_rule'); ?>'
+                        nonce: '<?php echo esc_attr(wp_create_nonce('maxt_rbp_add_rule')); ?>'
                     },
                     success: function(response) {
                         if (response.success) {
@@ -254,7 +254,8 @@ class MaxT_RBP_Admin {
             $nonce = sanitize_text_field($_GET['_wpnonce']);
             if (wp_verify_nonce($nonce, 'warm_cache') && current_user_can('manage_woocommerce')) {
                 $warmed_count = $this->core->warm_cache();
-                echo '<div class="notice notice-success"><p>' . sprintf(esc_html__('Cache warmed successfully. %d entries created.', 'maxt-rbp'), $warmed_count) . '</p></div>';
+                /* translators: %d is the number of cache entries created */
+                echo '<div class="notice notice-success"><p>' . sprintf(esc_html__('Cache warmed successfully. %d entries created.', 'maxt-rbp'), esc_html($warmed_count)) . '</p></div>';
             } else {
                 echo '<div class="notice notice-error"><p>' . esc_html__('Security check failed.', 'maxt-rbp') . '</p></div>';
             }
@@ -312,7 +313,7 @@ class MaxT_RBP_Admin {
         foreach ($all_roles as $role_name => $role_data) {
             echo '<tr><td><code>' . esc_html($role_name) . '</code></td><td>' . esc_html($role_data['display_name']) . '</td><td>' . ($role_data['is_custom'] ? '<span class="dashicons dashicons-admin-users"></span> ' . esc_html__('Custom', 'maxt-rbp') : '<span class="dashicons dashicons-wordpress"></span> ' . esc_html__('Built-in', 'maxt-rbp')) . '</td><td>' . esc_html($role_data['user_count']) . '</td><td>';
             if ($role_data['is_custom'] && $role_data['user_count'] === 0) {
-                echo '<a href="?page=maxt-role-pricing&action=delete_role&role=' . urlencode($role_name) . '&_wpnonce=' . wp_create_nonce('delete_role_' . $role_name) . '" class="button button-small" onclick="return confirm(\'' . esc_js(__('Are you sure you want to delete this role?', 'maxt-rbp')) . '\')">' . esc_html__('Delete', 'maxt-rbp') . '</a>';
+                echo '<a href="?page=maxt-role-pricing&action=delete_role&role=' . urlencode($role_name) . '&_wpnonce=' . esc_attr(wp_create_nonce('delete_role_' . $role_name)) . '" class="button button-small" onclick="return confirm(\'' . esc_js(__('Are you sure you want to delete this role?', 'maxt-rbp')) . '\')">' . esc_html__('Delete', 'maxt-rbp') . '</a>';
             } else {
                 echo '<span class="description">' . esc_html__('No actions available', 'maxt-rbp') . '</span>';
             }
@@ -321,11 +322,11 @@ class MaxT_RBP_Admin {
         echo '</tbody></table>';
         
         echo '<h3>' . esc_html__('Create New Role', 'maxt-rbp') . '</h3>';
-        echo $this->render_role_creation_form();
+        echo wp_kses_post($this->render_role_creation_form());
         echo '</div>';
         
         // Add create default global rules button
-        echo '<p><a href="?page=maxt-role-pricing&action=create_default_global_rules&_wpnonce=' . wp_create_nonce('create_default_global_rules') . '" class="button button-primary">' . esc_html__('Create Global Rules for All Roles', 'maxt-rbp') . '</a></p>';
+        echo '<p><a href="?page=maxt-role-pricing&action=create_default_global_rules&_wpnonce=' . esc_attr(wp_create_nonce('create_default_global_rules')) . '" class="button button-primary">' . esc_html__('Create Global Rules for All Roles', 'maxt-rbp') . '</a></p>';
         
         // Global Pricing Rules Section
         echo '<div class="maxt-rbp-settings-section"><h2>' . esc_html__('Global Pricing Rules', 'maxt-rbp') . '</h2>';
@@ -343,8 +344,8 @@ class MaxT_RBP_Admin {
                 echo '<tr>';
                 echo '<td>' . esc_html($role_display_name) . '</td>';
                 echo '<td>' . esc_html($discount_type_display) . '</td>';
-                echo '<td>' . $discount_value_display . '</td>';
-                echo '<td>' . $status_display . '</td>';
+                echo '<td>' . esc_html($discount_value_display) . '</td>';
+                echo '<td>' . esc_html($status_display) . '</td>';
                 echo '<td>';
                 echo '<button type="button" class="button button-small maxt-rbp-edit-global-rule" data-rule-id="' . esc_attr($rule['id']) . '" data-role-name="' . esc_attr($rule['role_name']) . '" data-discount-type="' . esc_attr($rule['discount_type']) . '" data-discount-value="' . esc_attr($rule['discount_value']) . '">' . esc_html__('Edit', 'maxt-rbp') . '</button> ';
                 echo '<button type="button" class="button button-small maxt-rbp-toggle-global-rule" data-rule-id="' . esc_attr($rule['id']) . '" data-current-status="' . esc_attr($rule['is_active']) . '">';
@@ -376,7 +377,7 @@ class MaxT_RBP_Admin {
                 $role_display_name = $this->get_role_display_name($rule['role_name']);
                 $discount_type_display = $rule['discount_type'] === 'percentage' ? __('Percentage', 'maxt-rbp') : __('Fixed Amount', 'maxt-rbp');
                 $discount_value_display = $rule['discount_type'] === 'percentage' ? $rule['discount_value'] . '%' : wc_price($rule['discount_value']);
-                echo '<tr><td>' . esc_html($product_name) . '</td><td>' . esc_html($role_display_name) . '</td><td>' . esc_html($discount_type_display) . '</td><td>' . $discount_value_display . '</td><td>' . esc_html(date_i18n(get_option('date_format'), strtotime($rule['created_at']))) . '</td></tr>';
+                echo '<tr><td>' . esc_html($product_name) . '</td><td>' . esc_html($role_display_name) . '</td><td>' . esc_html($discount_type_display) . '</td><td>' . esc_html($discount_value_display) . '</td><td>' . esc_html(date_i18n(get_option('date_format'), strtotime($rule['created_at']))) . '</td></tr>';
             }
             echo '</tbody></table>';
         }
@@ -446,7 +447,7 @@ class MaxT_RBP_Admin {
                         role_name: roleName,
                         discount_type: discountType,
                         discount_value: discountValue,
-                        nonce: '<?php echo wp_create_nonce('maxt_rbp_global_rule'); ?>'
+                        nonce: '<?php echo esc_attr(wp_create_nonce('maxt_rbp_global_rule')); ?>'
                     },
                     success: function(response) {
                         if (response.success) {
@@ -472,7 +473,7 @@ class MaxT_RBP_Admin {
                     data: {
                         action: 'maxt_rbp_delete_global_rule',
                         rule_id: ruleId,
-                        nonce: '<?php echo wp_create_nonce('maxt_rbp_global_rule'); ?>'
+                        nonce: '<?php echo esc_attr(wp_create_nonce('maxt_rbp_global_rule')); ?>'
                     },
                     success: function(response) {
                         if (response.success) {
@@ -499,7 +500,7 @@ class MaxT_RBP_Admin {
                     data: {
                         action: 'maxt_rbp_toggle_global_rule',
                         rule_id: ruleId,
-                        nonce: '<?php echo wp_create_nonce('maxt_rbp_global_rule'); ?>'
+                        nonce: '<?php echo esc_attr(wp_create_nonce('maxt_rbp_global_rule')); ?>'
                     },
                     success: function(response) {
                         if (response.success) {
@@ -573,7 +574,7 @@ class MaxT_RBP_Admin {
                         rule_id: ruleId,
                         discount_type: discountType,
                         discount_value: discountValue,
-                        nonce: '<?php echo wp_create_nonce('maxt_rbp_global_rule'); ?>'
+                        nonce: '<?php echo esc_attr(wp_create_nonce('maxt_rbp_global_rule')); ?>'
                     },
                     success: function(response) {
                         if (response.success) {
@@ -596,7 +597,7 @@ class MaxT_RBP_Admin {
             });
             
             // Cache Management JavaScript
-            var cacheNonce = '<?php echo wp_create_nonce('maxt_rbp_cache_action'); ?>';
+            var cacheNonce = '<?php echo esc_attr(wp_create_nonce('maxt_rbp_cache_action')); ?>';
             
             // Clear all cache
             $('#maxt-rbp-clear-all-cache').on('click', function() {
@@ -855,6 +856,7 @@ class MaxT_RBP_Admin {
 
     private function render_role_creation_form() {
         if ($this->core->get_custom_roles_count() >= 3) {
+            /* translators: %d is the maximum number of custom roles allowed */
             return '<p>' . sprintf(__('Maximum %d custom roles reached.', 'maxt-rbp'), 3) . '</p>';
         }
         ob_start();
@@ -901,7 +903,7 @@ class MaxT_RBP_Admin {
     public function ajax_add_rule() {
         check_ajax_referer('maxt_rbp_add_rule', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         // SECURITY: Enhanced input validation and sanitization
@@ -967,7 +969,7 @@ class MaxT_RBP_Admin {
     public function ajax_delete_rule() {
         check_ajax_referer('maxt_rbp_delete_rule', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         $rule_id = intval($_POST['rule_id']);
         $rule = $this->core->get_rules(array('id' => $rule_id));
@@ -1067,7 +1069,7 @@ class MaxT_RBP_Admin {
             </p>
         </form>
         <?php
-        echo ob_get_clean();
+        echo wp_kses_post(ob_get_clean());
     }
 
     /**
@@ -1120,7 +1122,7 @@ class MaxT_RBP_Admin {
     public function ajax_add_global_rule() {
         check_ajax_referer('maxt_rbp_global_rule', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         $role_name = sanitize_text_field($_POST['role_name']);
@@ -1159,7 +1161,7 @@ class MaxT_RBP_Admin {
     public function ajax_delete_global_rule() {
         check_ajax_referer('maxt_rbp_global_rule', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         $rule_id = intval($_POST['rule_id']);
@@ -1176,7 +1178,7 @@ class MaxT_RBP_Admin {
     public function ajax_toggle_global_rule() {
         check_ajax_referer('maxt_rbp_global_rule', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         $rule_id = intval($_POST['rule_id']);
@@ -1241,12 +1243,14 @@ class MaxT_RBP_Admin {
         if ($error_count > 0) {
             return array(
                 'success' => false,
-                'message' => sprintf(__('Created %d rules, skipped %d existing rules, but %d rules failed to create.', 'maxt-rbp'), $created_count, $skipped_count, $error_count)
+                /* translators: %1$d is the number of rules created, %2$d is the number of rules skipped, %3$d is the number of rules that failed */
+                'message' => sprintf(__('Created %1$d rules, skipped %2$d existing rules, but %3$d rules failed to create.', 'maxt-rbp'), $created_count, $skipped_count, $error_count)
             );
         } else {
             return array(
                 'success' => true,
-                'message' => sprintf(__('Successfully created %d default global pricing rules, skipped %d existing rules.', 'maxt-rbp'), $created_count, $skipped_count)
+                /* translators: %1$d is the number of rules created, %2$d is the number of rules skipped */
+                'message' => sprintf(__('Successfully created %1$d default global pricing rules, skipped %2$d existing rules.', 'maxt-rbp'), $created_count, $skipped_count)
             );
         }
     }
@@ -1330,7 +1334,7 @@ class MaxT_RBP_Admin {
     public function ajax_clear_cache() {
         check_ajax_referer('maxt_rbp_cache_action', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         $this->core->clear_all_cache();
@@ -1347,7 +1351,7 @@ class MaxT_RBP_Admin {
     public function ajax_clear_role_cache() {
         check_ajax_referer('maxt_rbp_cache_action', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         $role_name = sanitize_text_field($_POST['role_name']);
@@ -1358,6 +1362,7 @@ class MaxT_RBP_Admin {
         $this->core->clear_role_cache($role_name);
         
         wp_send_json_success(array(
+            /* translators: %s is the role name */
             'message' => sprintf(__('Cache cleared for role: %s', 'maxt-rbp'), $role_name),
             'timestamp' => current_time('mysql')
         ));
@@ -1369,7 +1374,7 @@ class MaxT_RBP_Admin {
     public function ajax_clear_product_cache() {
         check_ajax_referer('maxt_rbp_cache_action', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         $product_id = intval($_POST['product_id']);
@@ -1380,6 +1385,7 @@ class MaxT_RBP_Admin {
         $this->core->clear_product_cache($product_id);
         
         wp_send_json_success(array(
+            /* translators: %d is the product ID */
             'message' => sprintf(__('Cache cleared for product ID: %d', 'maxt-rbp'), $product_id),
             'timestamp' => current_time('mysql')
         ));
@@ -1391,7 +1397,7 @@ class MaxT_RBP_Admin {
     public function ajax_warm_cache() {
         check_ajax_referer('maxt_rbp_cache_action', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         $product_ids = isset($_POST['product_ids']) ? array_map('intval', (array)$_POST['product_ids']) : array();
@@ -1400,6 +1406,7 @@ class MaxT_RBP_Admin {
         $warmed_count = $this->core->warm_cache($product_ids, $role_names);
         
         wp_send_json_success(array(
+            /* translators: %d is the number of cache entries created */
             'message' => sprintf(__('Cache warmed successfully. %d entries created.', 'maxt-rbp'), $warmed_count),
             'warmed_count' => $warmed_count,
             'timestamp' => current_time('mysql')
@@ -1412,7 +1419,7 @@ class MaxT_RBP_Admin {
     public function ajax_get_cache_health() {
         check_ajax_referer('maxt_rbp_cache_action', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         $cache_health = $this->core->get_cache_health();
@@ -1426,7 +1433,7 @@ class MaxT_RBP_Admin {
     public function ajax_edit_global_rule() {
         check_ajax_referer('maxt_rbp_global_rule', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         $rule_id = intval($_POST['rule_id']);
@@ -1473,7 +1480,7 @@ class MaxT_RBP_Admin {
     public function ajax_edit_product_rule() {
         check_ajax_referer('maxt_rbp_add_rule', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         $rule_id = intval($_POST['rule_id']);
@@ -1546,7 +1553,7 @@ class MaxT_RBP_Admin {
         echo '<h3>' . esc_html__('Database Health Status', 'maxt-rbp') . '</h3>';
         
         $status_class = $db_health['status'] === 'healthy' ? 'notice-success' : 'notice-warning';
-        echo '<div class="notice ' . $status_class . ' inline">';
+        echo '<div class="notice ' . esc_attr($status_class) . ' inline">';
         echo '<p><strong>' . esc_html__('Status:', 'maxt-rbp') . '</strong> ' . esc_html(ucfirst($db_health['status'])) . '</p>';
         echo '</div>';
         
@@ -1573,7 +1580,7 @@ class MaxT_RBP_Admin {
         foreach ($db_health['index_status'] as $table => $indexes) {
             foreach ($indexes as $index => $exists) {
                 $status = $exists ? '<span style="color: green;">' . esc_html__('Present', 'maxt-rbp') . '</span>' : '<span style="color: red;">' . esc_html__('Missing', 'maxt-rbp') . '</span>';
-                echo '<tr><td>' . esc_html($table) . '</td><td>' . esc_html($index) . '</td><td>' . $status . '</td></tr>';
+                echo '<tr><td>' . esc_html($table) . '</td><td>' . esc_html($index) . '</td><td>' . wp_kses_post($status) . '</td></tr>';
             }
         }
         echo '</tbody></table>';
@@ -1613,7 +1620,7 @@ class MaxT_RBP_Admin {
     public function ajax_get_db_health() {
         check_ajax_referer('maxt_rbp_cache_action', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         $db_health = $this->core->check_database_health();
@@ -1626,7 +1633,7 @@ class MaxT_RBP_Admin {
     public function ajax_get_db_performance() {
         check_ajax_referer('maxt_rbp_cache_action', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         $db_performance = $this->core->get_database_performance_stats();
@@ -1639,7 +1646,7 @@ class MaxT_RBP_Admin {
     public function ajax_add_db_indexes() {
         check_ajax_referer('maxt_rbp_cache_action', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         $result = $this->core->add_database_indexes();
@@ -1708,7 +1715,7 @@ class MaxT_RBP_Admin {
     public function ajax_get_hook_performance() {
         check_ajax_referer('maxt_rbp_cache_action', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         $hook_stats = $this->core->get_hook_performance_stats();
@@ -1721,7 +1728,7 @@ class MaxT_RBP_Admin {
     public function ajax_clear_hook_performance() {
         check_ajax_referer('maxt_rbp_cache_action', 'nonce');
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(__('Insufficient permissions.', 'maxt-rbp'));
+            wp_die(esc_html__('Insufficient permissions.', 'maxt-rbp'));
         }
         
         $this->core->clear_hook_performance_stats();

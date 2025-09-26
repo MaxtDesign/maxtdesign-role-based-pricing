@@ -1011,6 +1011,7 @@ class MaxT_RBP_Core {
             return new WP_Error('role_exists', __('Role already exists.', 'maxt-rbp'));
         }
         if ($this->get_custom_roles_count() >= $this->max_custom_roles) {
+            /* translators: %d is the maximum number of custom roles allowed */
             return new WP_Error('max_roles_reached', sprintf(__('Maximum %d custom roles allowed.', 'maxt-rbp'), $this->max_custom_roles));
         }
         if (!preg_match('/^[a-z0-9_]+$/', $role_name)) {
@@ -1029,6 +1030,7 @@ class MaxT_RBP_Core {
         }
         $users_with_role = get_users(array('role' => $role_name));
         if (!empty($users_with_role)) {
+            /* translators: %d is the number of users assigned to the role */
             return new WP_Error('role_has_users', sprintf(__('Cannot delete role. %d users are assigned to this role.', 'maxt-rbp'), count($users_with_role)));
         }
         $result = remove_role($role_name);
