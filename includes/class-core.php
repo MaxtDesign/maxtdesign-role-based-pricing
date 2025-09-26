@@ -79,8 +79,8 @@ class MaxT_RBP_Core {
 
     public function drop_table() {
         global $wpdb;
-        $result1 = $wpdb->query("DROP TABLE IF EXISTS {$this->table_name}");
-        $result2 = $wpdb->query("DROP TABLE IF EXISTS {$this->global_table_name}");
+        $result1 = $wpdb->query($wpdb->prepare("DROP TABLE IF EXISTS %s", $this->table_name));
+        $result2 = $wpdb->query($wpdb->prepare("DROP TABLE IF EXISTS %s", $this->global_table_name));
         return $result1 && $result2;
     }
 
@@ -113,7 +113,7 @@ class MaxT_RBP_Core {
         
         foreach ($product_indexes as $index_name => $index_sql) {
             if (!$this->index_exists($this->table_name, $index_name)) {
-                $result = $wpdb->query("ALTER TABLE {$this->table_name} ADD {$index_sql}");
+                $result = $wpdb->query($wpdb->prepare("ALTER TABLE %s ADD %s", $this->table_name, $index_sql));
                 if ($result !== false) {
                     $indexes_added++;
                 } else {
@@ -131,7 +131,7 @@ class MaxT_RBP_Core {
         
         foreach ($global_indexes as $index_name => $index_sql) {
             if (!$this->index_exists($this->global_table_name, $index_name)) {
-                $result = $wpdb->query("ALTER TABLE {$this->global_table_name} ADD {$index_sql}");
+                $result = $wpdb->query($wpdb->prepare("ALTER TABLE %s ADD %s", $this->global_table_name, $index_sql));
                 if ($result !== false) {
                     $indexes_added++;
                 } else {
@@ -343,8 +343,8 @@ class MaxT_RBP_Core {
         global $wpdb;
         
         $sizes = array();
-        $sizes[$this->table_name] = $wpdb->get_var("SELECT COUNT(*) FROM {$this->table_name}");
-        $sizes[$this->global_table_name] = $wpdb->get_var("SELECT COUNT(*) FROM {$this->global_table_name}");
+        $sizes[$this->table_name] = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %s", $this->table_name));
+        $sizes[$this->global_table_name] = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %s", $this->global_table_name));
         
         return $sizes;
     }
@@ -714,8 +714,8 @@ class MaxT_RBP_Core {
             } else {
                 // Fallback for shared hosting environments
                 global $wpdb;
-                $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_maxt_rbp_user_%'");
-                $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_maxt_rbp_user_%'");
+                $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_maxt_rbp_user_%'));
+                $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_timeout_maxt_rbp_user_%'));
             }
             
             // Log cache clearing event
@@ -963,16 +963,16 @@ class MaxT_RBP_Core {
             INNER JOIN {$wpdb->prefix}woocommerce_order_items oi ON p.ID = oi.order_item_id
             INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id
             INNER JOIN {$wpdb->posts} o ON oi.order_id = o.ID
-            WHERE p.post_type = 'product'
-            AND p.post_status = 'publish'
-            AND oim.meta_key = '_product_id'
+            WHERE p.post_type = %s
+            AND p.post_status = %s
+            AND oim.meta_key = %s
             AND o.post_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
             GROUP BY p.ID
             ORDER BY order_count DESC
             LIMIT 10
         ";
         
-        $results = $wpdb->get_results($sql, ARRAY_A);
+        $results = $wpdb->get_results($wpdb->prepare($sql, 'product', 'publish', '_product_id'), ARRAY_A);
         return wp_list_pluck($results, 'ID');
     }
 
@@ -1245,8 +1245,8 @@ class MaxT_RBP_Core {
                 } else {
                     // Fallback for shared hosting environments
                     global $wpdb;
-                    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_maxt_rbp_user_%'");
-                    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_maxt_rbp_user_%'");
+                    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_maxt_rbp_user_%'));
+                    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_timeout_maxt_rbp_user_%'));
                 }
             }
         } catch (Exception $e) {
@@ -1298,8 +1298,8 @@ class MaxT_RBP_Core {
         
         // Clean up old performance monitoring transients
         global $wpdb;
-        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_maxt_rbp_%' AND option_name LIKE '%performance%'");
-        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_maxt_rbp_%' AND option_name LIKE '%performance%'");
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s AND option_name LIKE %s", '_transient_maxt_rbp_%', '%performance%'));
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s AND option_name LIKE %s", '_transient_timeout_maxt_rbp_%', '%performance%'));
     }
 
     /**
@@ -1330,7 +1330,7 @@ class MaxT_RBP_Core {
         
         // Clean up expired performance monitoring transients
         global $wpdb;
-        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_maxt_rbp_hook_stats'");
-        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_maxt_rbp_hook_stats'");
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_maxt_rbp_hook_stats'));
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_timeout_maxt_rbp_hook_stats'));
     }
 }
