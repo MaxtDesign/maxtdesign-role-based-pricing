@@ -789,9 +789,11 @@ class MaxT_Role_Based_Pricing {
             echo '<div class="notice notice-success is-dismissible">';
             echo '<p><strong>' . esc_html__('WooCommerce Role-Based Pricing', 'maxt-rbp') . '</strong> ' . 
                  esc_html__('has been activated!', 'maxt-rbp') . '</p>';
+            /* translators: %s is the link to the plugin settings page */
             echo '<p>' . sprintf(
+                /* translators: %s is the link to the plugin settings page */
                 esc_html__('Go to %s to create custom roles and set up pricing rules.', 'maxt-rbp'),
-                '<a href="' . admin_url('admin.php?page=maxt-role-pricing') . '">' . esc_html__('WooCommerce > Role-Based Pricing', 'maxt-rbp') . '</a>'
+                '<a href="' . esc_url(admin_url('admin.php?page=maxt-role-pricing')) . '">' . esc_html__('WooCommerce > Role-Based Pricing', 'maxt-rbp') . '</a>'
             ) . '</p>';
             echo '</div>';
             delete_transient('maxt_rbp_activation_notice');
