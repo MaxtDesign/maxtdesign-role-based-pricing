@@ -1,11 +1,11 @@
 /**
- * Admin styles for WooCommerce Role-Based Pricing Cache Management
+ * Admin styles for Role-Based Pricing for WooCommerce Cache Management
  *
- * @package MaxT_RBP
+ * @package MaxtDesign_RBP
  */
 
 /* Cache Management Section */
-.maxt-rbp-cache-status {
+.maxtdesign-rbp-cache-status {
     background: #f9f9f9;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -13,28 +13,28 @@
     margin-bottom: 20px;
 }
 
-.maxt-rbp-cache-status h3 {
+.maxtdesign-rbp-cache-status h3 {
     margin-top: 0;
     color: #23282d;
 }
 
-.maxt-rbp-cache-status table {
+.maxtdesign-rbp-cache-status table {
     margin: 0;
     background: transparent;
 }
 
-.maxt-rbp-cache-status table td {
+.maxtdesign-rbp-cache-status table td {
     padding: 8px 12px;
     border-bottom: 1px solid #e1e1e1;
 }
 
-.maxt-rbp-cache-status table td:first-child {
+.maxtdesign-rbp-cache-status table td:first-child {
     width: 200px;
     font-weight: 600;
 }
 
 /* Cache Actions */
-.maxt-rbp-cache-actions {
+.maxtdesign-rbp-cache-actions {
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -42,22 +42,22 @@
     margin-bottom: 20px;
 }
 
-.maxt-rbp-cache-actions h3 {
+.maxtdesign-rbp-cache-actions h3 {
     margin-top: 0;
     color: #23282d;
 }
 
-.maxt-rbp-cache-actions p {
+.maxtdesign-rbp-cache-actions p {
     margin-bottom: 15px;
 }
 
-.maxt-rbp-cache-actions button {
+.maxtdesign-rbp-cache-actions button {
     margin-right: 10px;
     margin-bottom: 5px;
 }
 
 /* Selective Cache Clearing */
-.maxt-rbp-selective-cache {
+.maxtdesign-rbp-selective-cache {
     background: #f0f8ff;
     border: 1px solid #b3d9ff;
     border-radius: 4px;
@@ -65,22 +65,22 @@
     margin-top: 15px;
 }
 
-.maxt-rbp-selective-cache h4 {
+.maxtdesign-rbp-selective-cache h4 {
     margin-top: 0;
     color: #0073aa;
 }
 
-.maxt-rbp-selective-cache p {
+.maxtdesign-rbp-selective-cache p {
     margin-bottom: 10px;
 }
 
-.maxt-rbp-selective-cache label {
+.maxtdesign-rbp-selective-cache label {
     font-weight: 600;
     margin-right: 10px;
 }
 
-.maxt-rbp-selective-cache select,
-.maxt-rbp-selective-cache input[type="number"] {
+.maxtdesign-rbp-selective-cache select,
+.maxtdesign-rbp-selective-cache input[type="number"] {
     margin-right: 10px;
     padding: 5px;
     border: 1px solid #ccc;
@@ -88,7 +88,7 @@
 }
 
 /* Cache Logs */
-.maxt-rbp-cache-logs {
+.maxtdesign-rbp-cache-logs {
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -96,29 +96,29 @@
     margin-top: 20px;
 }
 
-.maxt-rbp-cache-logs h3 {
+.maxtdesign-rbp-cache-logs h3 {
     margin-top: 0;
     color: #23282d;
 }
 
-.maxt-rbp-cache-logs table {
+.maxtdesign-rbp-cache-logs table {
     margin: 0;
     font-size: 13px;
 }
 
-.maxt-rbp-cache-logs table th {
+.maxtdesign-rbp-cache-logs table th {
     background: #f1f1f1;
     font-weight: 600;
     padding: 8px;
 }
 
-.maxt-rbp-cache-logs table td {
+.maxtdesign-rbp-cache-logs table td {
     padding: 6px 8px;
     border-bottom: 1px solid #e1e1e1;
 }
 
 /* Status Indicators */
-.maxt-rbp-status-indicator {
+.maxtdesign-rbp-status-indicator {
     display: inline-block;
     width: 12px;
     height: 12px;
@@ -126,42 +126,42 @@
     margin-right: 5px;
 }
 
-.maxt-rbp-status-indicator.healthy {
+.maxtdesign-rbp-status-indicator.healthy {
     background-color: #46b450;
 }
 
-.maxt-rbp-status-indicator.warning {
+.maxtdesign-rbp-status-indicator.warning {
     background-color: #ffb900;
 }
 
-.maxt-rbp-status-indicator.error {
+.maxtdesign-rbp-status-indicator.error {
     background-color: #dc3232;
 }
 
 /* Button States */
-.maxt-rbp-cache-actions button:disabled {
+.maxtdesign-rbp-cache-actions button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .maxt-rbp-cache-actions button {
+    .maxtdesign-rbp-cache-actions button {
         display: block;
         width: 100%;
         margin-bottom: 10px;
         margin-right: 0;
     }
 
-    .maxt-rbp-selective-cache select,
-    .maxt-rbp-selective-cache input[type="number"] {
+    .maxtdesign-rbp-selective-cache select,
+    .maxtdesign-rbp-selective-cache input[type="number"] {
         display: block;
         width: 100%;
         margin-bottom: 10px;
         margin-right: 0;
     }
 
-    .maxt-rbp-selective-cache label {
+    .maxtdesign-rbp-selective-cache label {
         display: block;
         margin-bottom: 5px;
         margin-right: 0;
@@ -169,44 +169,44 @@
 }
 
 /* Notice Styles */
-.maxt-rbp-notice {
+.maxtdesign-rbp-notice {
     margin: 15px 0;
     padding: 12px;
     border-left: 4px solid;
     border-radius: 0 4px 4px 0;
 }
 
-.maxt-rbp-notice.success {
+.maxtdesign-rbp-notice.success {
     background-color: #d4edda;
     border-left-color: #46b450;
     color: #155724;
 }
 
-.maxt-rbp-notice.error {
+.maxtdesign-rbp-notice.error {
     background-color: #f8d7da;
     border-left-color: #dc3232;
     color: #721c24;
 }
 
-.maxt-rbp-notice.warning {
+.maxtdesign-rbp-notice.warning {
     background-color: #fff3cd;
     border-left-color: #ffb900;
     color: #856404;
 }
 
-.maxt-rbp-notice.info {
+.maxtdesign-rbp-notice.info {
     background-color: #d1ecf1;
     border-left-color: #0073aa;
     color: #0c5460;
 }
 
 /* Loading States */
-.maxt-rbp-loading {
+.maxtdesign-rbp-loading {
     position: relative;
     overflow: hidden;
 }
 
-.maxt-rbp-loading::after {
+.maxtdesign-rbp-loading::after {
     content: '';
     position: absolute;
     top: 0;
@@ -228,12 +228,12 @@
 }
 
 /* Tooltip Styles */
-.maxt-rbp-tooltip {
+.maxtdesign-rbp-tooltip {
     position: relative;
     cursor: help;
 }
 
-.maxt-rbp-tooltip::after {
+.maxtdesign-rbp-tooltip::after {
     content: attr(data-tooltip);
     position: absolute;
     bottom: 125%;
@@ -251,13 +251,13 @@
     z-index: 1000;
 }
 
-.maxt-rbp-tooltip:hover::after {
+.maxtdesign-rbp-tooltip:hover::after {
     opacity: 1;
     visibility: visible;
 }
 
 /* Settings Section Styling */
-.maxt-rbp-settings-section {
+.maxtdesign-rbp-settings-section {
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -265,7 +265,7 @@
     margin-bottom: 20px;
 }
 
-.maxt-rbp-settings-section h2 {
+.maxtdesign-rbp-settings-section h2 {
     margin-top: 0;
     color: #23282d;
     border-bottom: 2px solid #0073aa;
@@ -273,18 +273,18 @@
 }
 
 /* Form Enhancements */
-.maxt-rbp-form-group {
+.maxtdesign-rbp-form-group {
     margin-bottom: 15px;
 }
 
-.maxt-rbp-form-group label {
+.maxtdesign-rbp-form-group label {
     display: block;
     margin-bottom: 5px;
     font-weight: 600;
 }
 
-.maxt-rbp-form-group input,
-.maxt-rbp-form-group select {
+.maxtdesign-rbp-form-group input,
+.maxtdesign-rbp-form-group select {
     width: 100%;
     max-width: 300px;
     padding: 8px;
@@ -292,14 +292,14 @@
     border-radius: 4px;
 }
 
-.maxt-rbp-form-group .description {
+.maxtdesign-rbp-form-group .description {
     font-size: 13px;
     color: #666;
     margin-top: 5px;
 }
 
 /* Modal Styles */
-.maxt-rbp-modal {
+.maxtdesign-rbp-modal {
     position: fixed;
     z-index: 1000;
     left: 0;
@@ -309,7 +309,7 @@
     background-color: rgba(0, 0, 0, 0.5);
 }
 
-.maxt-rbp-modal-content {
+.maxtdesign-rbp-modal-content {
     background-color: #fff;
     margin: 5% auto;
     padding: 0;
@@ -320,7 +320,7 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.maxt-rbp-modal-header {
+.maxtdesign-rbp-modal-header {
     background: #f1f1f1;
     padding: 15px 20px;
     border-bottom: 1px solid #ddd;
@@ -328,13 +328,13 @@
     position: relative;
 }
 
-.maxt-rbp-modal-header h3 {
+.maxtdesign-rbp-modal-header h3 {
     margin: 0;
     color: #23282d;
     font-size: 18px;
 }
 
-.maxt-rbp-modal-close {
+.maxtdesign-rbp-modal-close {
     position: absolute;
     right: 15px;
     top: 50%;
@@ -346,15 +346,15 @@
     line-height: 1;
 }
 
-.maxt-rbp-modal-close:hover {
+.maxtdesign-rbp-modal-close:hover {
     color: #000;
 }
 
-.maxt-rbp-modal-body {
+.maxtdesign-rbp-modal-body {
     padding: 20px;
 }
 
-.maxt-rbp-modal-footer {
+.maxtdesign-rbp-modal-footer {
     padding: 15px 20px;
     background: #f9f9f9;
     border-top: 1px solid #ddd;
@@ -362,54 +362,54 @@
     text-align: right;
 }
 
-.maxt-rbp-modal-footer button {
+.maxtdesign-rbp-modal-footer button {
     margin-left: 10px;
 }
 
-.maxt-rbp-readonly {
+.maxtdesign-rbp-readonly {
     background-color: #f1f1f1;
     color: #666;
     cursor: not-allowed;
 }
 
 /* Button styling for edit actions */
-.maxt-rbp-edit-global-rule {
+.maxtdesign-rbp-edit-global-rule {
     background-color: #0073aa !important;
     color: white !important;
     border-color: #0073aa !important;
 }
 
-.maxt-rbp-edit-global-rule:hover {
+.maxtdesign-rbp-edit-global-rule:hover {
     background-color: #005a87 !important;
     border-color: #005a87 !important;
 }
 
-.maxt-rbp-edit-product-rule {
+.maxtdesign-rbp-edit-product-rule {
     background-color: #0073aa !important;
     color: white !important;
     border-color: #0073aa !important;
     margin-right: 5px;
 }
 
-.maxt-rbp-edit-product-rule:hover {
+.maxtdesign-rbp-edit-product-rule:hover {
     background-color: #005a87 !important;
     border-color: #005a87 !important;
 }
 
 /* Responsive modal */
 @media (max-width: 768px) {
-    .maxt-rbp-modal-content {
+    .maxtdesign-rbp-modal-content {
         width: 95%;
         margin: 10% auto;
     }
 
-    .maxt-rbp-modal-header,
-    .maxt-rbp-modal-body,
-    .maxt-rbp-modal-footer {
+    .maxtdesign-rbp-modal-header,
+    .maxtdesign-rbp-modal-body,
+    .maxtdesign-rbp-modal-footer {
         padding: 15px;
     }
 
-    .maxt-rbp-modal-footer button {
+    .maxtdesign-rbp-modal-footer button {
         display: block;
         width: 100%;
         margin: 5px 0;

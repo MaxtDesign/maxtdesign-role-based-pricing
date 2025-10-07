@@ -1,8 +1,8 @@
 <?php
 /**
- * Frontend functionality for WooCommerce Role-Based Pricing
+ * Frontend functionality for Role-Based Pricing for WooCommerce
  *
- * @package MaxT_RBP
+ * @package MaxtDesign_RBP
  */
 
 // Prevent direct access
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 /**
  * Frontend class for handling role-based pricing display
  */
-class MaxT_RBP_Frontend {
+class MaxtDesign_RBP_Frontend {
 
     private $core;
 
@@ -29,7 +29,7 @@ class MaxT_RBP_Frontend {
 
     public function enqueue_styles() {
         if ($this->should_enqueue_styles()) {
-            wp_enqueue_style('maxt-rbp-frontend', MAXT_RBP_PLUGIN_URL . 'assets/css/frontend.css', array(), MAXT_RBP_VERSION);
+            wp_enqueue_style('maxtdesign-rbp-frontend', MAXTDESIGN_RBP_PLUGIN_URL . 'assets/css/frontend.css', array(), MAXTDESIGN_RBP_VERSION);
         }
     }
 

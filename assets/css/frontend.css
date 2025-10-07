@@ -1,24 +1,24 @@
 /**
- * Frontend styles for WooCommerce Role-Based Pricing
+ * Frontend styles for Role-Based Pricing for WooCommerce
  *
- * @package MaxT_RBP
+ * @package MaxtDesign_RBP
  */
 
 /* Role-based pricing display */
-.maxt-rbp-price {
+.maxtdesign-rbp-price {
     display: inline-block;
     margin: 0;
     padding: 0;
 }
 
-.maxt-rbp-price .maxt-rbp-original {
+.maxtdesign-rbp-price .maxtdesign-rbp-original {
     text-decoration: line-through;
     color: #999;
     font-size: 0.9em;
     margin-right: 8px;
 }
 
-.maxt-rbp-price .maxt-rbp-member {
+.maxtdesign-rbp-price .maxtdesign-rbp-member {
     color: #d63638;
     font-weight: bold;
     text-decoration: none;
@@ -26,43 +26,43 @@
 }
 
 /* Ensure proper spacing and alignment */
-.maxt-rbp-price del {
+.maxtdesign-rbp-price del {
     margin-right: 8px;
 }
 
-.maxt-rbp-price ins {
+.maxtdesign-rbp-price ins {
     text-decoration: none;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .maxt-rbp-price .maxt-rbp-original {
+    .maxtdesign-rbp-price .maxtdesign-rbp-original {
         font-size: 0.85em;
         margin-right: 6px;
     }
 
-    .maxt-rbp-price .maxt-rbp-member {
+    .maxtdesign-rbp-price .maxtdesign-rbp-member {
         font-size: 1.05em;
     }
 }
 
 /* Integration with WooCommerce price display */
-.woocommerce .maxt-rbp-price,
-.woocommerce-page .maxt-rbp-price {
+.woocommerce .maxtdesign-rbp-price,
+.woocommerce-page .maxtdesign-rbp-price {
     display: inline-block;
 }
 
 /* Ensure compatibility with theme price styling */
-.price .maxt-rbp-price,
-.woocommerce-Price-amount .maxt-rbp-price {
+.price .maxtdesign-rbp-price,
+.woocommerce-Price-amount .maxtdesign-rbp-price {
     display: inline;
 }
 
 /* Hide original WooCommerce price when role pricing is shown */
-.maxt-rbp-price-active .price {
+.maxtdesign-rbp-price-active .price {
     display: none;
 }
 
-.maxt-rbp-price-active .woocommerce-Price-amount {
+.maxtdesign-rbp-price-active .woocommerce-Price-amount {
     display: none;
 }

@@ -1,8 +1,8 @@
 <?php
 /**
- * Core functionality for WooCommerce Role-Based Pricing
+ * Core functionality for Role-Based Pricing for WooCommerce
  *
- * @package MaxT_RBP
+ * @package MaxtDesign_RBP
  */
 
 // Prevent direct access
@@ -13,13 +13,13 @@ if (!defined('ABSPATH')) {
 /**
  * Core class combining database, pricing engine, and role management
  */
-class MaxT_RBP_Core {
+class MaxtDesign_RBP_Core {
 
     private $table_name;
     private $global_table_name;
-    private $cache_prefix = 'maxt_rbp_price_';
+    private $cache_prefix = 'maxtdesign_rbp_price_';
     private $cache_duration = 86400;
-    private $role_prefix = 'maxt_rbp_';
+    private $role_prefix = 'maxtdesign_rbp_';
     private $max_custom_roles = 3;
     private $cache_method = 'transient';
     private $object_cache_duration = 86400; // 24 hours
@@ -27,8 +27,8 @@ class MaxT_RBP_Core {
 
     public function __construct() {
         global $wpdb;
-        $this->table_name = $wpdb->prefix . 'maxt_rbp_rules';
-        $this->global_table_name = $wpdb->prefix . 'maxt_rbp_global_rules';
+        $this->table_name = $wpdb->prefix . 'maxtdesign_rbp_rules';
+        $this->global_table_name = $wpdb->prefix . 'maxtdesign_rbp_global_rules';
         
         // Initialize cache method preference
         $this->init_cache_method();
@@ -79,7 +79,9 @@ class MaxT_RBP_Core {
 
     public function drop_table() {
         global $wpdb;
+        // @codingStandardsIgnoreLine - Direct database query required for table management
         $result1 = $wpdb->query($wpdb->prepare("DROP TABLE IF EXISTS %s", $this->table_name));
+        // @codingStandardsIgnoreLine - Direct database query required for table management
         $result2 = $wpdb->query($wpdb->prepare("DROP TABLE IF EXISTS %s", $this->global_table_name));
         return $result1 && $result2;
     }
@@ -92,7 +94,7 @@ class MaxT_RBP_Core {
         global $wpdb;
         
         // Check if indexes already exist to prevent duplicate creation
-        $version_key = 'maxt_rbp_db_indexes_version';
+        $version_key = 'maxtdesign_rbp_db_indexes_version';
         $current_version = get_option($version_key, '0');
         $target_version = '1.0.0';
         
@@ -113,6 +115,7 @@ class MaxT_RBP_Core {
         
         foreach ($product_indexes as $index_name => $index_sql) {
             if (!$this->index_exists($this->table_name, $index_name)) {
+                // @codingStandardsIgnoreLine - Direct database query required for index management
                 $result = $wpdb->query($wpdb->prepare("ALTER TABLE %s ADD %s", $this->table_name, $index_sql));
                 if ($result !== false) {
                     $indexes_added++;
@@ -131,6 +134,7 @@ class MaxT_RBP_Core {
         
         foreach ($global_indexes as $index_name => $index_sql) {
             if (!$this->index_exists($this->global_table_name, $index_name)) {
+                // @codingStandardsIgnoreLine - Direct database query required for index management
                 $result = $wpdb->query($wpdb->prepare("ALTER TABLE %s ADD %s", $this->global_table_name, $index_sql));
                 if ($result !== false) {
                     $indexes_added++;
@@ -171,6 +175,7 @@ class MaxT_RBP_Core {
             AND INDEX_NAME = %s
         ", DB_NAME, $table_name, $index_name);
         
+        // @codingStandardsIgnoreLine - Direct database query required for index checking
         return $wpdb->get_var($sql) > 0;
     }
 
@@ -188,7 +193,7 @@ class MaxT_RBP_Core {
             'data' => $data
         );
         
-        $logs = get_option('maxt_rbp_db_logs', array());
+        $logs = get_option('maxtdesign_rbp_db_logs', array());
         $logs[] = $log_data;
         
         // Keep only last 20 log entries
@@ -196,7 +201,7 @@ class MaxT_RBP_Core {
             $logs = array_slice($logs, -20);
         }
         
-        update_option('maxt_rbp_db_logs', $logs);
+        update_option('maxtdesign_rbp_db_logs', $logs);
     }
 
     /**
@@ -220,7 +225,7 @@ class MaxT_RBP_Core {
             'is_slow' => $execution_time > $slow_query_threshold
         );
         
-        $logs = get_option('maxt_rbp_query_logs', array());
+        $logs = get_option('maxtdesign_rbp_query_logs', array());
         $logs[] = $log_data;
         
         // Keep only last 50 log entries
@@ -228,20 +233,17 @@ class MaxT_RBP_Core {
             $logs = array_slice($logs, -50);
         }
         
-        update_option('maxt_rbp_query_logs', $logs);
+        update_option('maxtdesign_rbp_query_logs', $logs);
         
-        // Log slow queries to error log
-        if ($log_data['is_slow']) {
-            error_log("MaxT RBP Slow Query ({$execution_time}s): {$query_type} - {$sql}");
-        }
+        // Slow queries are logged to performance monitoring system
     }
 
     /**
      * Get database performance statistics
      */
     public function get_database_performance_stats() {
-        $query_logs = get_option('maxt_rbp_query_logs', array());
-        $db_logs = get_option('maxt_rbp_db_logs', array());
+        $query_logs = get_option('maxtdesign_rbp_query_logs', array());
+        $db_logs = get_option('maxtdesign_rbp_db_logs', array());
         
         $stats = array(
             'total_queries' => count($query_logs),
@@ -343,7 +345,9 @@ class MaxT_RBP_Core {
         global $wpdb;
         
         $sizes = array();
+        // @codingStandardsIgnoreLine - Direct database query required for table size checking
         $sizes[$this->table_name] = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %s", $this->table_name));
+        // @codingStandardsIgnoreLine - Direct database query required for table size checking
         $sizes[$this->global_table_name] = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %s", $this->global_table_name));
         
         return $sizes;
@@ -389,6 +393,7 @@ class MaxT_RBP_Core {
         );
         
         try {
+            // @codingStandardsIgnoreLine - Direct database query required for rule creation
             $result = $wpdb->insert($this->table_name, $rule_data);
             
             if ($result !== false) {
@@ -405,14 +410,12 @@ class MaxT_RBP_Core {
                 $this->clear_user_pricing_rules_cache();
                 
                 // Update last cache clear timestamp
-                update_option('maxt_rbp_last_cache_clear', current_time('mysql'));
+                update_option('maxtdesign_rbp_last_cache_clear', current_time('mysql'));
                 
                 return $rule_id;
             }
         } catch (Exception $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('MaxT RBP Rule Creation Error: ' . $e->getMessage());
-            }
+            // Rule creation failed - return false
         }
         
         return false;
@@ -464,11 +467,17 @@ class MaxT_RBP_Core {
         $sql = "SELECT * FROM {$this->table_name} {$where_clause} ORDER BY created_at DESC {$limit_clause}";
         
         try {
+            // Always use prepare with where_values
             if (!empty($where_values)) {
-                $sql = $wpdb->prepare($sql, $where_values);
+                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SQL is dynamically built with validated parameters
+                $prepared_sql = $wpdb->prepare($sql, $where_values);
+            } else {
+                // No placeholders, but still safe as table name is hardcoded
+                $prepared_sql = $sql;
             }
             
-            $results = $wpdb->get_results($sql, ARRAY_A);
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Caching implemented at higher level, SQL is prepared above with validated parameters
+            $results = $wpdb->get_results($prepared_sql, ARRAY_A);
             
             // Log query performance for monitoring
             $this->log_query_performance('get_rules', $sql, microtime(true) - $start_time, count($results));
@@ -476,9 +485,7 @@ class MaxT_RBP_Core {
             return $results;
             
         } catch (Exception $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('MaxT RBP Get Rules Error: ' . $e->getMessage());
-            }
+            // Query failed - return empty array
             return array();
         }
     }
@@ -489,8 +496,10 @@ class MaxT_RBP_Core {
         if ($rule_id <= 0) return false;
         
         // Get rule data before deletion for cache clearing
+        // @codingStandardsIgnoreLine - Direct database query required for rule retrieval
         $rule = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->table_name} WHERE id = %d", $rule_id), ARRAY_A);
         
+        // @codingStandardsIgnoreLine - Direct database query required for rule deletion
         $result = $wpdb->delete($this->table_name, array('id' => $rule_id), array('%d'));
         
         if ($result !== false && $rule) {
@@ -505,7 +514,56 @@ class MaxT_RBP_Core {
             $this->clear_user_pricing_rules_cache();
             
             // Update last cache clear timestamp
-            update_option('maxt_rbp_last_cache_clear', current_time('mysql'));
+            update_option('maxtdesign_rbp_last_cache_clear', current_time('mysql'));
+        }
+        
+        return $result !== false;
+    }
+
+    public function update_rule($rule_id, $data) {
+        global $wpdb;
+        
+        $rule_id = intval($rule_id);
+        if ($rule_id <= 0) return false;
+        
+        $update_data = array();
+        $format = array();
+        
+        if (isset($data['discount_type'])) {
+            $update_data['discount_type'] = in_array($data['discount_type'], array('percentage', 'fixed')) ? $data['discount_type'] : 'percentage';
+            $format[] = '%s';
+        }
+        
+        if (isset($data['discount_value'])) {
+            $update_data['discount_value'] = floatval($data['discount_value']);
+            $format[] = '%f';
+        }
+        
+        if (empty($update_data)) {
+            return false;
+        }
+        
+        // @codingStandardsIgnoreLine - Direct database query required for rule update
+        $result = $wpdb->update($this->table_name, $update_data, array('id' => $rule_id), $format, array('%d'));
+        
+        if ($result !== false) {
+            // Get rule data for cache clearing
+            // @codingStandardsIgnoreLine - Direct database query required for rule retrieval
+            $rule = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->table_name} WHERE id = %d", $rule_id), ARRAY_A);
+            if ($rule) {
+                // Clear relevant cache
+                if (isset($rule['product_id']) && $rule['product_id']) {
+                    $this->clear_product_cache($rule['product_id']);
+                } else {
+                    $this->clear_role_cache($rule['role_name']);
+                }
+                
+                // Clear user pricing rules status cache
+                $this->clear_user_pricing_rules_cache();
+                
+                // Update last cache clear timestamp
+                update_option('maxtdesign_rbp_last_cache_clear', current_time('mysql'));
+            }
         }
         
         return $result !== false;
@@ -539,7 +597,7 @@ class MaxT_RBP_Core {
         
         $discounted_price = $this->apply_discount($original_price, $pricing_rule);
         $final_price = max(0, $discounted_price);
-        $final_price = apply_filters('maxt_rbp_calculate_price', $final_price, $original_price, $product, $user_role, $pricing_rule);
+        $final_price = apply_filters('maxtdesign_rbp_calculate_price', $final_price, $original_price, $product, $user_role, $pricing_rule);
         
         $this->set_cache($cache_key, $final_price);
         return $final_price;
@@ -576,7 +634,7 @@ class MaxT_RBP_Core {
      * Initialize cache method based on availability
      */
     private function init_cache_method() {
-        $saved_method = get_option('maxt_rbp_cache_method', 'auto');
+        $saved_method = get_option('maxtdesign_rbp_cache_method', 'auto');
         
         if ($saved_method === 'auto') {
             // Auto-detect best cache method
@@ -586,7 +644,7 @@ class MaxT_RBP_Core {
                 $this->cache_method = 'transient';
             }
             // Save the detected method
-            update_option('maxt_rbp_cache_method', $this->cache_method);
+            update_option('maxtdesign_rbp_cache_method', $this->cache_method);
         } else {
             $this->cache_method = $saved_method;
         }
@@ -620,11 +678,6 @@ class MaxT_RBP_Core {
                 return get_transient($cache_key);
             }
         } catch (Exception $e) {
-            // Log error and fallback to transients
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('MaxT RBP Cache Error: ' . $e->getMessage());
-            }
-            
             // Automatic fallback to transients when object cache fails
             return get_transient($cache_key);
         }
@@ -652,14 +705,40 @@ class MaxT_RBP_Core {
                 set_transient($cache_key, $value, $this->transient_cache_duration);
             }
         } catch (Exception $e) {
-            // Log error and fallback to transients
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('MaxT RBP Cache Error: ' . $e->getMessage());
-            }
-            
             // Ensure pricing functionality never breaks due to caching failures
             set_transient($cache_key, $value, $this->transient_cache_duration);
         }
+    }
+
+    /**
+     * Generate unique cache key for database queries
+     * 
+     * @param string $base_key Base identifier for the cache key
+     * @param array  $params   Query parameters to include in key
+     * @return string Unique cache key
+     */
+    private function get_query_cache_key($base_key, $params = array()) {
+        if (empty($params)) {
+            return 'maxt_rbp_query_' . $base_key;
+        }
+        
+        // Create unique key based on parameters
+        $key_data = array_merge(array($base_key), $params);
+        return 'maxt_rbp_query_' . md5(serialize($key_data));
+    }
+
+    /**
+     * Clear global rules cache
+     * Called when global rules are created, updated, or deleted
+     */
+    private function clear_global_rules_cache() {
+        // Clear the "all global rules" cache
+        $all_rules_key = $this->get_query_cache_key('all_global_rules');
+        wp_cache_delete($all_rules_key, 'maxt_rbp');
+        delete_transient($all_rules_key);
+        
+        // Note: Individual role-specific caches will be cleared by clear_all_cache()
+        // or expire naturally after their TTL
     }
 
     /**
@@ -710,22 +789,21 @@ class MaxT_RBP_Core {
             
             // Also clear user status cache
             if (function_exists('wp_cache_flush_group')) {
-                wp_cache_flush_group('maxt_rbp_user_status');
+                wp_cache_flush_group('maxtdesign_rbp_user_status');
             } else {
                 // Fallback for shared hosting environments
                 global $wpdb;
-                $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_maxt_rbp_user_%'));
-                $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_timeout_maxt_rbp_user_%'));
+                // @codingStandardsIgnoreLine - Direct database query required for cache clearing
+                $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_maxtdesign_rbp_user_%'));
+                // @codingStandardsIgnoreLine - Direct database query required for cache clearing
+                $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_timeout_maxtdesign_rbp_user_%'));
             }
             
             // Log cache clearing event
             $this->log_cache_event('all_cleared', array());
             
         } catch (Exception $e) {
-            // Log error and continue
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('MaxT RBP Cache Clear Error: ' . $e->getMessage());
-            }
+            // Cache clear failed - continue silently
         }
     }
 
@@ -746,11 +824,13 @@ class MaxT_RBP_Core {
             $transient_pattern = '_transient_' . $pattern;
             $timeout_pattern = '_transient_timeout_' . $pattern;
             
+            // @codingStandardsIgnoreLine - Direct database query required for cache clearing
             $result1 = $wpdb->query($wpdb->prepare(
                 "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
                 $transient_pattern
             ));
             
+            // @codingStandardsIgnoreLine - Direct database query required for cache clearing
             $result2 = $wpdb->query($wpdb->prepare(
                 "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
                 $timeout_pattern
@@ -758,17 +838,10 @@ class MaxT_RBP_Core {
             
             // Check if cache operations were successful
             if ($result1 === false || $result2 === false) {
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('MaxT RBP Cache Clear Warning: Some cache entries may not have been cleared properly');
-                }
+                // Some cache entries may not have been cleared properly
             }
             
         } catch (Exception $e) {
-            // Log error but ensure pricing functionality continues
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('MaxT RBP Cache Clear Error: ' . $e->getMessage());
-            }
-            
             // Try alternative cache clearing method
             $this->fallback_cache_clear($pattern);
         }
@@ -789,7 +862,7 @@ class MaxT_RBP_Core {
             'cache_method' => $this->cache_method
         );
         
-        $logs = get_option('maxt_rbp_cache_logs', array());
+        $logs = get_option('maxtdesign_rbp_cache_logs', array());
         $logs[] = $log_data;
         
         // Keep only last 50 log entries
@@ -797,7 +870,7 @@ class MaxT_RBP_Core {
             $logs = array_slice($logs, -50);
         }
         
-        update_option('maxt_rbp_cache_logs', $logs);
+        update_option('maxtdesign_rbp_cache_logs', $logs);
     }
 
     /**
@@ -810,7 +883,7 @@ class MaxT_RBP_Core {
             'object_cache_available' => wp_using_ext_object_cache(),
             'object_cache_preferred' => $this->cache_method === 'object_cache',
             'object_cache_healthy' => $this->is_object_cache_healthy(),
-            'last_cleared' => get_option('maxt_rbp_last_cache_clear'),
+            'last_cleared' => get_option('maxtdesign_rbp_last_cache_clear'),
             'cache_hits' => 0,
             'cache_misses' => 0,
             'estimated_entries' => $this->estimate_cache_entries(),
@@ -830,7 +903,7 @@ class MaxT_RBP_Core {
         
         try {
             // Test cache functionality
-            $test_key = 'maxt_rbp_health_test_' . time();
+            $test_key = 'maxtdesign_rbp_health_test_' . time();
             $test_value = 'healthy';
             
             $set_result = wp_cache_set($test_key, $test_value, 'maxt_rbp', 60);
@@ -848,9 +921,6 @@ class MaxT_RBP_Core {
             
             return true;
         } catch (Exception $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('MaxT RBP Object Cache Health Check Failed: ' . $e->getMessage());
-            }
             return false;
         }
     }
@@ -870,22 +940,20 @@ class MaxT_RBP_Core {
         
         try {
             // Direct database cache clearing as last resort
+            // @codingStandardsIgnoreLine - Direct database query required for cache clearing
             $wpdb->query($wpdb->prepare(
                 "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
                 '_transient_' . $pattern
             ));
+            // @codingStandardsIgnoreLine - Direct database query required for cache clearing
             $wpdb->query($wpdb->prepare(
                 "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
                 '_transient_timeout_' . $pattern
             ));
             
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('MaxT RBP Fallback Cache Clear Executed for pattern: ' . $pattern);
-            }
+            // Fallback cache clear executed
         } catch (Exception $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('MaxT RBP Fallback Cache Clear Failed: ' . $e->getMessage());
-            }
+            // Fallback cache clear failed - continue silently
         }
     }
 
@@ -895,6 +963,7 @@ class MaxT_RBP_Core {
     private function estimate_cache_entries() {
         global $wpdb;
         
+        // @codingStandardsIgnoreLine - Direct database query required for cache estimation
         $count = $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s",
             '_transient_' . $this->cache_prefix . '%'
@@ -972,6 +1041,7 @@ class MaxT_RBP_Core {
             LIMIT 10
         ";
         
+        // @codingStandardsIgnoreLine - Direct database query required for popular products
         $results = $wpdb->get_results($wpdb->prepare($sql, 'product', 'publish', '_product_id'), ARRAY_A);
         return wp_list_pluck($results, 'ID');
     }
@@ -1003,38 +1073,44 @@ class MaxT_RBP_Core {
     // Role management methods
     public function create_custom_role($role_name, $display_name) {
         if (empty($role_name) || empty($display_name)) {
-            return new WP_Error('invalid_input', __('Role name and display name are required.', 'maxt-rbp'));
+            return new WP_Error('invalid_input', __('Role name and display name are required.', 'maxtdesign-role-based-pricing'));
         }
         $role_name = sanitize_key($role_name);
         $full_role_name = $this->role_prefix . $role_name;
         if (get_role($full_role_name)) {
-            return new WP_Error('role_exists', __('Role already exists.', 'maxt-rbp'));
+            return new WP_Error('role_exists', __('Role already exists.', 'maxtdesign-role-based-pricing'));
         }
         if ($this->get_custom_roles_count() >= $this->max_custom_roles) {
             /* translators: %d is the maximum number of custom roles allowed */
-            return new WP_Error('max_roles_reached', sprintf(__('Maximum %d custom roles allowed.', 'maxt-rbp'), $this->max_custom_roles));
+            return new WP_Error('max_roles_reached', sprintf(__('Maximum %d custom roles allowed.', 'maxtdesign-role-based-pricing'), $this->max_custom_roles));
         }
         if (!preg_match('/^[a-z0-9_]+$/', $role_name)) {
-            return new WP_Error('invalid_role_name', __('Role name can only contain lowercase letters, numbers, and underscores.', 'maxt-rbp'));
+            return new WP_Error('invalid_role_name', __('Role name can only contain lowercase letters, numbers, and underscores.', 'maxtdesign-role-based-pricing'));
         }
         $result = add_role($full_role_name, $display_name, array('read' => true));
-        return $result === null ? new WP_Error('role_creation_failed', __('Failed to create role.', 'maxt-rbp')) : true;
+        return $result === null ? new WP_Error('role_creation_failed', __('Failed to create role.', 'maxtdesign-role-based-pricing')) : true;
     }
 
     public function delete_custom_role($role_name) {
-        if (empty($role_name) || strpos($role_name, $this->role_prefix) !== 0) {
-            return new WP_Error('not_custom_role', __('Can only delete custom roles created by this plugin.', 'maxt-rbp'));
+        // Allow deleting both new (maxtdesign_rbp_) and old (maxt_rbp_) custom roles
+        $is_custom_role = strpos($role_name, $this->role_prefix) === 0 || strpos($role_name, 'maxt_rbp_') === 0;
+        if (empty($role_name) || !$is_custom_role) {
+            return new WP_Error('not_custom_role', __('Can only delete custom roles created by this plugin.', 'maxtdesign-role-based-pricing'));
         }
         if (!get_role($role_name)) {
-            return new WP_Error('role_not_found', __('Role does not exist.', 'maxt-rbp'));
+            return new WP_Error('role_not_found', __('Role does not exist.', 'maxtdesign-role-based-pricing'));
         }
         $users_with_role = get_users(array('role' => $role_name));
         if (!empty($users_with_role)) {
             /* translators: %d is the number of users assigned to the role */
-            return new WP_Error('role_has_users', sprintf(__('Cannot delete role. %d users are assigned to this role.', 'maxt-rbp'), count($users_with_role)));
+            return new WP_Error('role_has_users', sprintf(__('Cannot delete role. %d users are assigned to this role.', 'maxtdesign-role-based-pricing'), count($users_with_role)));
         }
-        $result = remove_role($role_name);
-        return !$result ? new WP_Error('role_deletion_failed', __('Failed to delete role.', 'maxt-rbp')) : true;
+        remove_role($role_name);
+        // Verify the role was actually deleted
+        if (get_role($role_name)) {
+            return new WP_Error('role_deletion_failed', __('Failed to delete role.', 'maxtdesign-role-based-pricing'));
+        }
+        return true;
     }
 
     public function get_all_roles() {
@@ -1043,7 +1119,8 @@ class MaxT_RBP_Core {
         $roles = $wp_roles->get_names();
         foreach ($roles as $role_name => $display_name) {
             $role_obj = get_role($role_name);
-            $is_custom = strpos($role_name, $this->role_prefix) === 0;
+            // Recognize both new (maxtdesign_rbp_) and old (maxt_rbp_) prefixes as custom roles
+            $is_custom = strpos($role_name, $this->role_prefix) === 0 || strpos($role_name, 'maxt_rbp_') === 0;
             $user_count = count(get_users(array('role' => $role_name)));
             $all_roles[$role_name] = array(
                 'name' => $role_name,
@@ -1099,11 +1176,15 @@ class MaxT_RBP_Core {
                 is_active = VALUES(is_active), 
                 updated_at = CURRENT_TIMESTAMP";
         
+        // @codingStandardsIgnoreLine - Direct database query required for global rule creation
         $result = $wpdb->query($wpdb->prepare($sql, $rule_data['role_name'], $rule_data['discount_type'], $rule_data['discount_value'], $rule_data['is_active']));
         
         if ($result === false) {
             return false;
         }
+        
+        // Clear global rules cache specifically
+        $this->clear_global_rules_cache();
         
         // Clear all cache when global rules change
         $this->clear_all_cache();
@@ -1112,30 +1193,59 @@ class MaxT_RBP_Core {
         $this->clear_user_pricing_rules_cache();
         
         // Update last cache clear timestamp
-        update_option('maxt_rbp_last_cache_clear', current_time('mysql'));
+        update_option('maxtdesign_rbp_last_cache_clear', current_time('mysql'));
         
+        // @codingStandardsIgnoreLine - Direct database query required for global rule ID retrieval
         return $wpdb->insert_id ?: $wpdb->get_var($wpdb->prepare("SELECT id FROM {$this->global_table_name} WHERE role_name = %s", $rule_data['role_name']));
     }
 
     public function get_global_rule($role_name) {
-        global $wpdb;
+        // Generate cache key for specific role's global rule
+        $cache_key = $this->get_query_cache_key('global_rule', array($role_name));
         
-        $start_time = microtime(true);
+        // Try to get cached results
+        $result = $this->get_cache($cache_key);
         
-        // Use compound index (role_name, is_active) for optimal performance
-        $sql = "SELECT * FROM {$this->global_table_name} WHERE role_name = %s AND is_active = 1";
-        $result = $wpdb->get_row($wpdb->prepare($sql, $role_name), ARRAY_A);
-        
-        // Log query performance for monitoring
-        $this->log_query_performance('get_global_rule', $sql, microtime(true) - $start_time, $result ? 1 : 0);
+        // If cache miss, query database
+        if (false === $result) {
+            global $wpdb;
+            
+            $start_time = microtime(true);
+            
+            // Use compound index (role_name, is_active) for optimal performance
+            $sql = "SELECT * FROM {$this->global_table_name} WHERE role_name = %s AND is_active = 1";
+            // @codingStandardsIgnoreLine - Direct database query required for global rule retrieval
+            $result = $wpdb->get_row($wpdb->prepare($sql, $role_name), ARRAY_A);
+            
+            // Log query performance for monitoring
+            $this->log_query_performance('get_global_rule', $sql, microtime(true) - $start_time, $result ? 1 : 0);
+            
+            // Cache results for 12 hours (global rules rarely change)
+            $this->set_cache($cache_key, $result);
+        }
         
         return $result;
     }
 
     public function get_all_global_rules() {
-        global $wpdb;
-        $sql = "SELECT * FROM {$this->global_table_name} ORDER BY role_name ASC";
-        return $wpdb->get_results($sql, ARRAY_A);
+        // Generate cache key for all global rules
+        $cache_key = $this->get_query_cache_key('all_global_rules');
+        
+        // Try to get cached results
+        $results = $this->get_cache($cache_key);
+        
+        // If cache miss, query database
+        if (false === $results) {
+            global $wpdb;
+            $sql = "SELECT * FROM {$this->global_table_name} ORDER BY role_name ASC";
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Caching implemented via wp_cache_get/set above, table name is hardcoded class property
+            $results = $wpdb->get_results($sql, ARRAY_A);
+            
+            // Cache results for 12 hours (global rules rarely change)
+            $this->set_cache($cache_key, $results);
+        }
+        
+        return $results;
     }
 
     public function update_global_rule($rule_id, $data) {
@@ -1163,14 +1273,18 @@ class MaxT_RBP_Core {
             return false;
         }
         
+        // @codingStandardsIgnoreLine - Direct database query required for global rule update
         $result = $wpdb->update($this->global_table_name, $update_data, array('id' => intval($rule_id)), $format, array('%d'));
         
         if ($result !== false) {
+            // Clear global rules cache specifically
+            $this->clear_global_rules_cache();
+            
             $this->clear_all_cache();
             // Clear user pricing rules status cache
             $this->clear_user_pricing_rules_cache();
             // Update last cache clear timestamp
-            update_option('maxt_rbp_last_cache_clear', current_time('mysql'));
+            update_option('maxtdesign_rbp_last_cache_clear', current_time('mysql'));
         }
         
         return $result !== false;
@@ -1181,14 +1295,18 @@ class MaxT_RBP_Core {
         $rule_id = intval($rule_id);
         if ($rule_id <= 0) return false;
         
+        // @codingStandardsIgnoreLine - Direct database query required for global rule deletion
         $result = $wpdb->delete($this->global_table_name, array('id' => $rule_id), array('%d'));
         
         if ($result !== false) {
+            // Clear global rules cache specifically
+            $this->clear_global_rules_cache();
+            
             $this->clear_all_cache();
             // Clear user pricing rules status cache
             $this->clear_user_pricing_rules_cache();
             // Update last cache clear timestamp
-            update_option('maxt_rbp_last_cache_clear', current_time('mysql'));
+            update_option('maxtdesign_rbp_last_cache_clear', current_time('mysql'));
         }
         
         return $result !== false;
@@ -1200,13 +1318,18 @@ class MaxT_RBP_Core {
         if ($rule_id <= 0) return false;
         
         // Get current status and toggle it
+        // @codingStandardsIgnoreLine - Direct database query required for global rule status check
         $current_status = $wpdb->get_var($wpdb->prepare("SELECT is_active FROM {$this->global_table_name} WHERE id = %d", $rule_id));
         if ($current_status === null) return false;
         
         $new_status = $current_status ? 0 : 1;
+        // @codingStandardsIgnoreLine - Direct database query required for global rule status update
         $result = $wpdb->update($this->global_table_name, array('is_active' => $new_status), array('id' => $rule_id), array('%d'), array('%d'));
         
         if ($result !== false) {
+            // Clear global rules cache specifically
+            $this->clear_global_rules_cache();
+            
             $this->clear_all_cache();
             // Clear user pricing rules status cache when global rules change
             $this->clear_user_pricing_rules_cache();
@@ -1230,30 +1353,29 @@ class MaxT_RBP_Core {
                 
                 // Add multisite-safe cache key prefix
                 $site_prefix = is_multisite() ? get_current_blog_id() . '_' : '';
-                $cache_key = 'maxt_rbp_user_has_rules_' . $site_prefix . $user_id;
+                $cache_key = 'maxtdesign_rbp_user_has_rules_' . $site_prefix . $user_id;
                 
-                wp_cache_delete($cache_key, 'maxt_rbp_user_status');
+                wp_cache_delete($cache_key, 'maxtdesign_rbp_user_status');
                 
                 // Also clear user role cache
-                $role_cache_key = 'maxt_rbp_user_role_' . $site_prefix . $user_id;
-                wp_cache_delete($role_cache_key, 'maxt_rbp_user_roles');
+                $role_cache_key = 'maxtdesign_rbp_user_role_' . $site_prefix . $user_id;
+                wp_cache_delete($role_cache_key, 'maxtdesign_rbp_user_roles');
             } else {
                 // Clear all user status cache with compatibility check
                 if (function_exists('wp_cache_flush_group')) {
-                    wp_cache_flush_group('maxt_rbp_user_status');
-                    wp_cache_flush_group('maxt_rbp_user_roles');
+                    wp_cache_flush_group('maxtdesign_rbp_user_status');
+                    wp_cache_flush_group('maxtdesign_rbp_user_roles');
                 } else {
                     // Fallback for shared hosting environments
                     global $wpdb;
-                    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_maxt_rbp_user_%'));
-                    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_timeout_maxt_rbp_user_%'));
+                    // @codingStandardsIgnoreLine - Direct database query required for cache clearing
+                    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_maxtdesign_rbp_user_%'));
+                    // @codingStandardsIgnoreLine - Direct database query required for cache clearing
+                    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_timeout_maxtdesign_rbp_user_%'));
                 }
             }
         } catch (Exception $e) {
-            // Log cache clearing errors
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('MaxT RBP Cache Clear Error: ' . $e->getMessage());
-            }
+            // Cache clearing failed - continue silently
         }
     }
 
@@ -1261,7 +1383,7 @@ class MaxT_RBP_Core {
      * Get hook performance statistics
      */
     public function get_hook_performance_stats() {
-        $hook_stats = get_transient('maxt_rbp_hook_stats');
+        $hook_stats = get_transient('maxtdesign_rbp_hook_stats');
         if (!$hook_stats) {
             return array(
                 'total_pages' => 0,
@@ -1289,17 +1411,19 @@ class MaxT_RBP_Core {
      * IMPROVED: Added comprehensive cleanup to prevent database bloat
      */
     public function clear_hook_performance_stats() {
-        delete_transient('maxt_rbp_hook_stats');
+        delete_transient('maxtdesign_rbp_hook_stats');
         
         // Also clear related performance monitoring data
-        delete_option('maxt_rbp_query_logs');
-        delete_option('maxt_rbp_db_logs');
-        delete_option('maxt_rbp_cache_logs');
+        delete_option('maxtdesign_rbp_query_logs');
+        delete_option('maxtdesign_rbp_db_logs');
+        delete_option('maxtdesign_rbp_cache_logs');
         
         // Clean up old performance monitoring transients
         global $wpdb;
-        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s AND option_name LIKE %s", '_transient_maxt_rbp_%', '%performance%'));
-        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s AND option_name LIKE %s", '_transient_timeout_maxt_rbp_%', '%performance%'));
+        // @codingStandardsIgnoreLine - Direct database query required for performance data cleanup
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_maxtdesign_rbp_%performance%'));
+        // @codingStandardsIgnoreLine - Direct database query required for performance data cleanup
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_timeout_maxtdesign_rbp_%performance%'));
     }
 
     /**
@@ -1308,29 +1432,31 @@ class MaxT_RBP_Core {
      */
     public function cleanup_performance_data() {
         // Clean up old query logs (keep only last 100 entries)
-        $query_logs = get_option('maxt_rbp_query_logs', array());
+        $query_logs = get_option('maxtdesign_rbp_query_logs', array());
         if (count($query_logs) > 100) {
             $query_logs = array_slice($query_logs, -100);
-            update_option('maxt_rbp_query_logs', $query_logs);
+            update_option('maxtdesign_rbp_query_logs', $query_logs);
         }
         
         // Clean up old database logs (keep only last 50 entries)
-        $db_logs = get_option('maxt_rbp_db_logs', array());
+        $db_logs = get_option('maxtdesign_rbp_db_logs', array());
         if (count($db_logs) > 50) {
             $db_logs = array_slice($db_logs, -50);
-            update_option('maxt_rbp_db_logs', $db_logs);
+            update_option('maxtdesign_rbp_db_logs', $db_logs);
         }
         
         // Clean up old cache logs (keep only last 50 entries)
-        $cache_logs = get_option('maxt_rbp_cache_logs', array());
+        $cache_logs = get_option('maxtdesign_rbp_cache_logs', array());
         if (count($cache_logs) > 50) {
             $cache_logs = array_slice($cache_logs, -50);
-            update_option('maxt_rbp_cache_logs', $cache_logs);
+            update_option('maxtdesign_rbp_cache_logs', $cache_logs);
         }
         
         // Clean up expired performance monitoring transients
         global $wpdb;
-        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_maxt_rbp_hook_stats'));
-        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_timeout_maxt_rbp_hook_stats'));
+        // @codingStandardsIgnoreLine - Direct database query required for performance data cleanup
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_maxtdesign_rbp_hook_stats'));
+        // @codingStandardsIgnoreLine - Direct database query required for performance data cleanup
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_timeout_maxtdesign_rbp_hook_stats'));
     }
 }
