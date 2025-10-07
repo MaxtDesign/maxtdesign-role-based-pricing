@@ -1,9 +1,9 @@
-=== WooCommerce Role-Based Pricing ===
+=== MaxtDesign Role-Based Pricing for WooCommerce ===
 Contributors: maxtdesign
 Donate link: https://maxtdesign.com/
 Tags: woocommerce, pricing, wholesale, discounts, membership
-Requires at least: 5.0
-Tested up to: 6.4
+Requires at least: 6.2
+Tested up to: 6.8
 Stable tag: 1.0.0
 Requires PHP: 7.4
 WC requires at least: 5.0
@@ -143,4 +143,4 @@ Yes, we provide comprehensive support through WordPress.org forums and direct co
 == Upgrade Notice ==
 
 = 1.0.0 =
-Launch version of WooCommerce Role-Based Pricing. Professional membership pricing, wholesale discounts, and customer group management without monthly fees.
+Launch version of Role-Based Pricing for WooCommerce. Professional membership pricing, wholesale discounts, and customer group management without monthly fees.

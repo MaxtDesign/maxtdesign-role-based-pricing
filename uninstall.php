@@ -1,11 +1,11 @@
 <?php
 /**
- * Uninstall script for WooCommerce Role-Based Pricing
+ * Uninstall script for Role-Based Pricing for WooCommerce
  * 
  * This file is executed when the plugin is deleted via WordPress admin.
  * It performs a complete cleanup of all plugin data.
  *
- * @package MaxT_RBP
+ * @package MaxtDesign_RBP
  */
 
 // Prevent direct access
@@ -24,18 +24,18 @@ require_once plugin_dir_path(__FILE__) . 'includes/class-admin.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-frontend.php';
 
 // Initialize core and cleanup
-$core = new MaxT_RBP_Core();
+$core = new MaxtDesign_RBP_Core();
 $core->drop_table();
 $core->remove_all_custom_roles();
 $core->clear_all_cache();
 
 // Delete all plugin options
 $plugin_options = array(
-    'maxt_rbp_version',
-    'maxt_rbp_cache_duration',
-    'maxt_rbp_display_original_price',
-    'maxt_rbp_settings',
-    'maxt_rbp_roles',
+    'maxtdesign_rbp_version',
+    'maxtdesign_rbp_cache_duration',
+    'maxtdesign_rbp_display_original_price',
+    'maxtdesign_rbp_settings',
+    'maxtdesign_rbp_roles',
 );
 
 foreach ($plugin_options as $option) {
@@ -44,12 +44,16 @@ foreach ($plugin_options as $option) {
 
 // Clear all transients related to the plugin
 global $wpdb;
-$wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_maxt_rbp_%'");
-$wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_maxt_rbp_%'");
+// @codingStandardsIgnoreLine - Direct database query required for plugin uninstall cleanup
+$wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_maxtdesign_rbp_%'");
+// @codingStandardsIgnoreLine - Direct database query required for plugin uninstall cleanup
+$wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_maxtdesign_rbp_%'");
 
 
 // Clear any cached data
 wp_cache_flush();
 
 // Log uninstall
-error_log('WooCommerce Role-Based Pricing plugin uninstalled - all data cleaned up');
+if (defined('WP_DEBUG') && WP_DEBUG) {
+    // Debug logging removed for security compliance
+}
