@@ -18,12 +18,12 @@ class MaxtDesign_RBP_Core {
     private $table_name;
     private $global_table_name;
     private $cache_prefix = 'maxtdesign_rbp_price_';
-    private $cache_duration = 86400;
+    private $cache_duration = 3600; // SECURITY FIX: Reduced from 24 hours to 1 hour
     private $role_prefix = 'maxtdesign_rbp_';
     private $max_custom_roles = 3;
     private $cache_method = 'transient';
-    private $object_cache_duration = 86400; // 24 hours
-    private $transient_cache_duration = 3600; // 1 hour
+    private $object_cache_duration = 3600; // SECURITY FIX: Reduced from 24 hours to 1 hour
+    private $transient_cache_duration = 1800; // SECURITY FIX: Reduced from 1 hour to 30 minutes
 
     public function __construct() {
         global $wpdb;
@@ -399,14 +399,16 @@ class MaxtDesign_RBP_Core {
             if ($result !== false) {
                 $rule_id = $wpdb->insert_id;
                 
-                // Clear relevant cache
+                // SECURITY FIX: Clear ALL relevant cache to prevent stale pricing
+                // Clear product cache if product-specific rule
                 if (isset($rule_data['product_id']) && $rule_data['product_id']) {
                     $this->clear_product_cache($rule_data['product_id']);
-                } else {
-                    $this->clear_role_cache($rule_data['role_name']);
                 }
                 
-                // Clear user pricing rules status cache
+                // SECURITY FIX: Always clear role cache to invalidate all cached prices for this role
+                $this->clear_role_cache($rule_data['role_name']);
+                
+                // SECURITY FIX: Clear user pricing rules status cache
                 $this->clear_user_pricing_rules_cache();
                 
                 // Update last cache clear timestamp
@@ -503,14 +505,16 @@ class MaxtDesign_RBP_Core {
         $result = $wpdb->delete($this->table_name, array('id' => $rule_id), array('%d'));
         
         if ($result !== false && $rule) {
-            // Clear relevant cache
+            // SECURITY FIX: Clear ALL relevant cache to prevent stale pricing
+            // Clear product cache if product-specific rule
             if (isset($rule['product_id']) && $rule['product_id']) {
                 $this->clear_product_cache($rule['product_id']);
-            } else {
-                $this->clear_role_cache($rule['role_name']);
             }
             
-            // Clear user pricing rules status cache
+            // SECURITY FIX: Always clear role cache to invalidate all cached prices for this role
+            $this->clear_role_cache($rule['role_name']);
+            
+            // SECURITY FIX: Clear user pricing rules status cache
             $this->clear_user_pricing_rules_cache();
             
             // Update last cache clear timestamp
@@ -551,14 +555,16 @@ class MaxtDesign_RBP_Core {
             // @codingStandardsIgnoreLine - Direct database query required for rule retrieval
             $rule = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->table_name} WHERE id = %d", $rule_id), ARRAY_A);
             if ($rule) {
-                // Clear relevant cache
+                // SECURITY FIX: Clear ALL relevant cache to prevent stale pricing
+                // Clear product cache if product-specific rule
                 if (isset($rule['product_id']) && $rule['product_id']) {
                     $this->clear_product_cache($rule['product_id']);
-                } else {
-                    $this->clear_role_cache($rule['role_name']);
                 }
                 
-                // Clear user pricing rules status cache
+                // SECURITY FIX: Always clear role cache to invalidate all cached prices for this role
+                $this->clear_role_cache($rule['role_name']);
+                
+                // SECURITY FIX: Clear user pricing rules status cache
                 $this->clear_user_pricing_rules_cache();
                 
                 // Update last cache clear timestamp
@@ -580,16 +586,41 @@ class MaxtDesign_RBP_Core {
         // Allow administrators to see role-based pricing for testing
         // if ($user_role === 'administrator') return $original_price;
         
-        $cache_key = $this->generate_cache_key($product->get_id(), $user_role, $original_price);
+        // SECURITY FIX: Get pricing rule FIRST to include rule version in cache key
+        // This prevents stale cache from being returned when rules change
+        $pricing_rule = $this->get_pricing_rule($product->get_id(), $user_role);
+        
+        // Generate cache key that includes rule ID/version for validation
+        $rule_version = $pricing_rule ? $pricing_rule['id'] . '_' . ($pricing_rule['updated_at'] ?? $pricing_rule['created_at']) : 'no_rule';
+        $cache_key = $this->generate_cache_key($product->get_id(), $user_role, $original_price) . '_' . md5($rule_version);
+        
+        // Check cache with validated key
         $cached_price = $this->get_cache($cache_key);
         
         // Use cached price if available (bypass cache in debug mode)
+        // SECURITY: Cache key includes rule version, so stale cache won't match
         if ($cached_price !== false && (!defined('WP_DEBUG') || !WP_DEBUG)) {
-            return floatval($cached_price);
+            // SECURITY FIX: Sanity check - cached price must be reasonable
+            // If cached price is less than $1 for products over $50, reject cache
+            if ($original_price > 50 && $cached_price < 1) {
+                // Log suspicious cache entry
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log(sprintf(
+                        'MaxtDesign RBP Cache Sanity Check Failed: Product %d, Original: $%s, Cached: $%s',
+                        $product->get_id(),
+                        number_format($original_price, 2),
+                        number_format($cached_price, 2)
+                    ));
+                }
+                // Clear suspicious cache and recalculate
+                wp_cache_delete($cache_key, 'maxt_rbp');
+                delete_transient($cache_key);
+            } else {
+                return floatval($cached_price);
+            }
         }
         
-        $pricing_rule = $this->get_pricing_rule($product->get_id(), $user_role);
-        
+        // No rule found or cache miss - calculate fresh
         if (!$pricing_rule) {
             $this->set_cache($cache_key, $original_price);
             return $original_price;
