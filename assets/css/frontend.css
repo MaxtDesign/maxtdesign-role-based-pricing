@@ -4,6 +4,22 @@
  * @package MaxtDesign_RBP
  */
 
+/**
+ * CUSTOMIZE ROLE PRICING COLORS
+ * 
+ * Add this to your theme's custom CSS (Appearance > Customize > Additional CSS):
+ * 
+ * .maxtdesign-rbp-price .maxtdesign-rbp-member {
+ *     color: #your-color-here !important;
+ * }
+ * 
+ * Examples:
+ * - Green:  color: #28a745 !important;
+ * - Blue:   color: #0073aa !important;
+ * - Orange: color: #ff6b35 !important;
+ * - Inherit from theme: color: inherit !important;
+ */
+
 /* Role-based pricing display */
 .maxtdesign-rbp-price {
     display: inline-block;
@@ -19,7 +35,7 @@
 }
 
 .maxtdesign-rbp-price .maxtdesign-rbp-member {
-    color: #d63638;
+    color: inherit;
     font-weight: bold;
     text-decoration: none;
     font-size: 1.1em;

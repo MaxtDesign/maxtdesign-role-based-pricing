@@ -1,5 +1,5 @@
 === MaxtDesign Role-Based Pricing for WooCommerce ===
-Contributors: maxtdesign
+Contributors: MaxtDesign
 Donate link: https://maxtdesign.com/
 Tags: woocommerce, pricing, wholesale, discounts, membership
 Requires at least: 6.2
@@ -106,6 +106,10 @@ Absolutely. Product-specific pricing rules always override global rules, giving 
 = Does it work with other WooCommerce plugins? =
 
 Yes, it's designed for maximum compatibility using standard WooCommerce hooks and WordPress coding standards. Works alongside most WooCommerce extensions.
+
+= Can I customize the member price color? =
+
+Yes! By default, member prices use your theme's color. To customize, go to Appearance > Customize > Additional CSS and add: `.maxtdesign-rbp-price .maxtdesign-rbp-member { color: #your-color !important; }`. See CUSTOMIZATION-GUIDE.md for examples.
 
 = How does it compare to subscription-based pricing plugins? =
 
