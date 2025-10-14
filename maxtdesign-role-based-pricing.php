@@ -160,6 +160,10 @@ class MaxtDesign_Role_Based_Pricing {
 
         // Smart hook loading - only register hooks when needed
         $this->init_smart_hooks();
+        
+        // CRITICAL: Clear cache and memory after each order to prevent rapid-order exploits
+        add_action('woocommerce_checkout_order_processed', array($this, 'clear_cache_after_order'), 99, 1);
+        add_action('woocommerce_thankyou', array($this, 'clear_session_after_order'), 99, 1);
     }
 
     /**
@@ -753,6 +757,128 @@ class MaxtDesign_Role_Based_Pricing {
     public static function clear_in_memory_storage() {
         self::$original_prices = array();
         self::$user_has_discounts = false;
+    }
+
+    /**
+     * Clear cache and in-memory storage after order is processed
+     * CRITICAL FIX: Prevents stale pricing data from affecting subsequent rapid orders
+     * 
+     * This addresses a security vulnerability where:
+     * - Order 1 calculates and caches pricing data in memory
+     * - Order 2 (placed within minutes) reuses stale cached data
+     * - Result: Price corruption allowing fraudulent sub-$1 purchases
+     * 
+     * Real-world exploit: Products worth $500+ sold for $0.54 due to
+     * rapid automated ordering exploiting cache persistence.
+     * 
+     * @param int $order_id The WooCommerce order ID
+     * @return void
+     */
+    public function clear_cache_after_order($order_id) {
+        try {
+            // Validate order exists
+            $order = wc_get_order($order_id);
+            if (!$order) {
+                return;
+            }
+            
+            // Get user ID for targeted cache clearing
+            $user_id = $order->get_user_id();
+            
+            // STEP 1: Clear in-memory storage (MOST CRITICAL)
+            // This eliminates the primary attack vector
+            self::clear_in_memory_storage();
+            
+            // STEP 2: Clear user-specific pricing rule status cache
+            // Ensures fresh role/rule lookup on next request
+            if ($user_id && $user_id > 0) {
+                // Clear the "user has rules" cache
+                $site_prefix = is_multisite() ? get_current_blog_id() . '_' : '';
+                $user_rules_cache_key = 'maxtdesign_rbp_user_has_rules_' . $site_prefix . $user_id;
+                wp_cache_delete($user_rules_cache_key, 'maxtdesign_rbp_user_status');
+                
+                // Clear user role cache
+                $user_role_cache_key = 'maxtdesign_rbp_user_role_' . $user_id;
+                wp_cache_delete($user_role_cache_key, 'maxtdesign_rbp_user_roles');
+                
+                // Clear transient fallbacks (for non-object-cache environments)
+                delete_transient($user_rules_cache_key);
+                delete_transient($user_role_cache_key);
+            }
+            
+            // STEP 3: Clear price calculation cache for ordered items
+            // Prevents cached prices from affecting future orders
+            foreach ($order->get_items() as $item) {
+                $product_id = $item->get_product_id();
+                if ($product_id && $this->core) {
+                    // Clear all cached prices for this product across all roles
+                    $this->core->clear_product_cache($product_id);
+                }
+            }
+            
+            // STEP 4: Log cache clearing for debugging (only in WP_DEBUG mode)
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf(
+                    'MaxtDesign RBP: Cleared cache after order #%d for user #%d (%d items)',
+                    $order_id,
+                    $user_id,
+                    count($order->get_items())
+                ));
+            }
+            
+        } catch (Exception $e) {
+            // CRITICAL: Never let cache clearing break order processing
+            // Silent failure - order completion must succeed even if cache clear fails
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('MaxtDesign RBP Cache Clear Error: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Clear WooCommerce session data after order completion
+     * CRITICAL FIX: Prevents session-based pricing data persistence
+     * 
+     * This ensures that any session-stored pricing information is
+     * cleared when the user completes checkout, preventing potential
+     * session hijacking or session reuse exploits.
+     * 
+     * @param int $order_id The WooCommerce order ID
+     * @return void
+     */
+    public function clear_session_after_order($order_id) {
+        try {
+            // Verify WooCommerce session exists
+            if (!WC()->session) {
+                return;
+            }
+            
+            // Clear any plugin-specific session data
+            WC()->session->set('maxtdesign_rbp_prices', null);
+            WC()->session->set('maxtdesign_rbp_user_role', null);
+            WC()->session->set('maxtdesign_rbp_discount_applied', null);
+            
+            // Force session regeneration for security
+            // This prevents session fixation attacks
+            if (method_exists(WC()->session, 'regenerate_id')) {
+                WC()->session->regenerate_id(true);
+            }
+            
+            // Log session clearing for debugging (only in WP_DEBUG mode)
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf(
+                    'MaxtDesign RBP: Cleared session after order #%d',
+                    $order_id
+                ));
+            }
+            
+        } catch (Exception $e) {
+            // CRITICAL: Never let session clearing break order processing
+            // Silent failure - order completion must succeed
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('MaxtDesign RBP Session Clear Error: ' . $e->getMessage());
+            }
+        }
     }
 
     /**
