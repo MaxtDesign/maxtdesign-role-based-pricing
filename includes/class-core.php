@@ -811,7 +811,11 @@ class MaxtDesign_RBP_Core {
      */
     public function clear_all_cache() {
         try {
+            // Clear price cache
             $this->clear_cache_by_pattern($this->cache_prefix . '%');
+            
+            // Clear query cache (global rules, etc.)
+            $this->clear_cache_by_pattern('maxt_rbp_query_%');
             
             // Clear object cache group if available with error handling
             if (function_exists('wp_cache_flush_group')) {
@@ -1234,8 +1238,13 @@ class MaxtDesign_RBP_Core {
         // Generate cache key for specific role's global rule
         $cache_key = $this->get_query_cache_key('global_rule', array($role_name));
         
-        // Try to get cached results
+        // Try to get cached results (bypass cache in debug mode)
         $result = $this->get_cache($cache_key);
+        
+        // Bypass cache in debug mode to ensure fresh data during development
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            $result = false;
+        }
         
         // If cache miss, query database
         if (false === $result) {

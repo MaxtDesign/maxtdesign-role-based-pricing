@@ -164,8 +164,8 @@ class MaxtDesign_RBP_Admin {
         }
         
         if (isset($_GET['action']) && $_GET['action'] === 'delete_role' && isset($_GET['role']) && isset($_GET['_wpnonce'])) {
-            $role_name = sanitize_text_field(wp_unslash($_GET['role']));
             $nonce = sanitize_text_field(wp_unslash($_GET['_wpnonce']));
+            $role_name = sanitize_text_field(wp_unslash($_GET['role']));
             if (wp_verify_nonce($nonce, 'delete_role_' . $role_name) && current_user_can('manage_woocommerce')) {
                 $result = $this->core->delete_custom_role($role_name);
                 if (is_wp_error($result)) {
