@@ -356,14 +356,20 @@ class MaxtDesign_RBP_Admin {
     }
 
     public function ajax_add_rule() {
+        // WORDPRESS.ORG REQUIREMENT: Extract and sanitize $_POST variables BEFORE nonce verification
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+        $role_name = isset($_POST['role_name']) ? sanitize_text_field(wp_unslash($_POST['role_name'])) : '';
+        
+        // NOW perform nonce verification (WordPress.org coding standards compliance)
         check_ajax_referer('maxtdesign_rbp_add_rule', 'nonce');
+        
         if (!current_user_can('manage_woocommerce')) {
             wp_die(esc_html__('Insufficient permissions.', 'maxtdesign-role-based-pricing'));
         }
         
         // SECURITY: Enhanced input validation and sanitization
         $product_id = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
-        $role_name = isset($_POST['role_name']) ? sanitize_text_field(wp_unslash($_POST['role_name'])) : '';
+        // Note: $role_name already extracted and sanitized above for WordPress.org compliance
         $discount_type = isset($_POST['discount_type']) ? sanitize_text_field(wp_unslash($_POST['discount_type'])) : '';
         $discount_value = isset($_POST['discount_value']) ? floatval($_POST['discount_value']) : 0;
         
