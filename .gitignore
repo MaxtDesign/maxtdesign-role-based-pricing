@@ -42,3 +42,25 @@ yarn-error.log
 # Temporary files
 *.tmp
 *.temp
+
+# WordPress Plugin Directory upload files
+svn-upload/
+.svnignore
+
+# Development and documentation files
+screenshots-dev/
+notes/
+docs/
+
+# WordPress Plugin Directory assets (these should be in svn-upload only)
+assets/banner-*.png
+assets/icon-*.png
+assets/screenshot-*.png
+
+# Development documentation
+*.md
+!README.md
+!readme.txt
+
+# SVN and deployment files
+SVN_UPLOAD_INSTRUCTIONS.md
