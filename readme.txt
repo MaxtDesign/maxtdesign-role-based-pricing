@@ -11,11 +11,11 @@ WC tested up to: 8.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Professional role-based pricing for WooCommerce. Create membership tiers, wholesale discounts, and custom pricing for different user groups.
+Free role-based pricing for WooCommerce. Create customer groups and apply simple percentage or fixed discounts across your catalog.
 
 == Description ==
 
-Transform your WooCommerce store into a powerful B2B and wholesale platform with advanced membership pricing capabilities. This professional plugin enables you to create custom price levels for different customer groups, offering volume discounts, tier pricing, and exclusive member rates without monthly fees or complex setup.
+Transform your WooCommerce store with role-based pricing. This free plugin lets you create price rules for different customer groups using percentage or fixed discounts — no subscriptions, no upsells, and no complex setup.
 
 **Perfect for:**
 * Wholesale and B2B businesses with volume pricing
@@ -25,19 +25,17 @@ Transform your WooCommerce store into a powerful B2B and wholesale platform with
 * Stores offering bulk discounts and group rates
 
 **Why Choose This Plugin:**
-* **No Monthly Fees** - One-time purchase, unlike subscription-based alternatives
-* **Unlimited Price Rules** - Create as many pricing tiers as needed
+* **Completely Free** - No subscriptions, upsells, or hidden limits
+* **Flexible Pricing Rules** - Percentage or fixed discounts per role
 * **Built-in Performance Optimization** - Advanced caching prevents slowdowns
 * **No External Dependencies** - Self-contained with no API requirements
 * **Professional Grade** - Enterprise-level features without enterprise costs
 
 **Key Features:**
-* **Flexible Membership Pricing & Discount Rules** - Set global rules or product-specific overrides
-* **Multiple Discount Types** - Choose between percentage discounts or fixed amount reductions
-* **Customer Group Management** - Create up to 3 custom user roles with dedicated pricing
-* **Volume and Bulk Discount Support** - Perfect for wholesale operations
-* **Multi-Tier Price Levels** - Accommodate complex pricing structures
-* **Advanced Performance System** - Built-in caching with automatic optimization
+* **Role-Based Pricing Rules** - Set global rules; product-level overrides supported
+* **Two Discount Types** - Percentage or fixed amount reductions
+* **Customer Group Management** - Create up to 3 custom user roles
+* **Optimized Performance** - Built-in caching with automatic optimization
 * **WooCommerce HPOS Compatible** - Full support for High-Performance Order Storage
 
 **How Membership Pricing Works:**
@@ -56,7 +54,7 @@ Transform your WooCommerce store into a powerful B2B and wholesale platform with
 * **Multisite Ready** - Works seamlessly in WordPress multisite environments
 
 **Competitive Advantages:**
-Unlike other WooCommerce pricing plugins, this solution offers unlimited pricing rules with no recurring costs, built-in performance optimization, and zero external API dependencies. No monthly subscriptions, no usage limits, no connection requirements.
+Free alternative to paid pricing plugins. No subscriptions, no usage caps, and no external API dependencies.
 
 == Installation ==
 
@@ -65,7 +63,7 @@ Unlike other WooCommerce pricing plugins, this solution offers unlimited pricing
 3. Ensure WooCommerce is installed and activated (required)
 4. Navigate to WooCommerce > Role-Based Pricing to configure your pricing rules
 5. Create customer groups or use existing WordPress roles
-6. Set up global pricing rules or product-specific tier pricing
+6. Set up global pricing rules or optional product-specific overrides
 
 **System Requirements:**
 * WordPress 5.0 or higher
@@ -79,13 +77,13 @@ Unlike other WooCommerce pricing plugins, this solution offers unlimited pricing
 
 Navigate to WooCommerce > Role-Based Pricing, create custom roles for each tier (Bronze, Silver, Gold), then set percentage or fixed discounts for each membership level. Members automatically see their tier pricing when logged in.
 
-= Can I offer bulk discounts based on customer groups? =
+= Can I offer discounts based on customer groups? =
 
-Yes! Set up wholesale customer groups and assign volume discount percentages. The plugin automatically applies group-specific pricing to all products, with options for product-specific overrides.
+Yes. Create a role (e.g., Wholesale) and assign a percentage or fixed discount. You can also set product-specific overrides when needed.
 
 = Does it work for customer groups and price levels? =
 
-Absolutely. Create unlimited customer groups with different price levels. Each group can have unique discount rates, and you can override global rules with product-specific pricing when needed.
+Yes. You can use existing WordPress roles or create up to 3 custom roles. Each role can have its own discount, and product-level overrides are supported.
 
 = How do I create volume discounts for wholesale customers? =
 
@@ -113,36 +111,30 @@ Yes! By default, member prices use your theme's color. To customize, go to Appea
 
 = How does it compare to subscription-based pricing plugins? =
 
-Unlike subscription-based alternatives, this is a one-time purchase with no monthly fees, unlimited pricing rules, and no external API requirements. You own the software completely.
+This plugin is completely free, with no recurring fees and no external API requirements.
 
 = Is technical support included? =
 
-Yes, we provide comprehensive support through WordPress.org forums and direct contact for setup assistance and troubleshooting.
+Community support is available through the WordPress.org forums.
 
 == Screenshots ==
 
-1. **Admin Overview** - Role management and global pricing rules dashboard
-2. **Product Pricing** - Product-specific pricing rules with override capabilities  
-3. **Role Management** - Create and manage customer groups and pricing tiers
-4. **Frontend Display** - Customer view showing member pricing with original price strikethrough
-5. **Cache Management** - Performance optimization tools and cache status
-6. **Performance Monitoring** - Database and system performance tracking (optional developer tool)
+1. **Admin Dashboard** - Role management and pricing rules overview
+2. **Shop Page** - Frontend display showing member pricing
+3. **Product Page** - Single product with role-based pricing
+4. **Variable Product** - Variations with role-based pricing
+5. **Cart Page** - Cart totals reflecting role-based discounts
 
 == Changelog ==
 
 = 1.0.0 =
-* Initial release with professional-grade features
+* Initial release (free)
 * Global and product-specific pricing rules
-* Customer group creation and management (up to 3 custom groups)
+* Create up to 3 custom user roles
 * Advanced caching system with automatic optimization
-* Performance monitoring tools for developers
-* Full WooCommerce HPOS compatibility
-* Comprehensive admin interface with intuitive controls
-* Database optimization with proper indexing
-* Enterprise-level security with input validation
-* WordPress multisite compatibility
-* Graceful error handling and fallback systems
-* Zero external dependencies for maximum reliability
+* WooCommerce HPOS compatibility
+* Multisite compatible
+* Zero external dependencies
 
 == Upgrade Notice ==
 
