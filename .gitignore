@@ -48,9 +48,8 @@ svn-upload/
 .svnignore
 
 # Development and documentation files
-screenshots-dev/
-notes/
 docs/
+PROJECT_CONTEXT.md
 
 # WordPress Plugin Directory assets (these should be in svn-upload only)
 assets/banner-*.png
