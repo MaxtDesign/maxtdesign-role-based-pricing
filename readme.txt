@@ -1,5 +1,5 @@
 === MaxtDesign Role-Based Pricing for WooCommerce ===
-Contributors: MaxtDesign
+Contributors: slaacr
 Donate link: https://maxtdesign.com/
 Tags: woocommerce, pricing, wholesale, discounts, membership
 Requires at least: 6.2
