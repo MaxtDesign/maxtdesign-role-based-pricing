@@ -156,7 +156,7 @@ Minimum Purchase: Set in WooCommerce settings
 - MySQL 5.6 or higher
 
 **Recommended:**
-- WordPress 6.8+
+- WordPress 6.9+
 - WooCommerce 8.5+
 - PHP 8.0+
 - MySQL 8.0+ or MariaDB 10.5+

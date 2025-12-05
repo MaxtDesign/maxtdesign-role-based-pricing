@@ -8,7 +8,7 @@
  * Author URI: https://maxtdesign.com
  * Text Domain: maxtdesign-role-based-pricing
  * Requires at least: 6.2
- * Tested up to: 6.8
+ * Tested up to: 6.9
  * Requires PHP: 7.4
  * Requires Plugins: woocommerce
  * WC requires at least: 5.0
