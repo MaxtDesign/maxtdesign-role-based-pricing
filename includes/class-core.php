@@ -368,7 +368,7 @@ class MaxtDesign_RBP_Core {
         }
         
         // Validate discount type
-        $discount_type = in_array($data['discount_type'], array('percentage', 'fixed')) ? $data['discount_type'] : 'percentage';
+        $discount_type = in_array($data['discount_type'], array('percentage', 'fixed', 'fixed_price')) ? $data['discount_type'] : 'percentage';
         
         // Validate discount value
         $discount_value = floatval($data['discount_value']);
@@ -425,14 +425,19 @@ class MaxtDesign_RBP_Core {
 
     public function get_rules($args = array()) {
         global $wpdb;
-        $defaults = array('role_name' => '', 'product_id' => '', 'limit' => 0, 'offset' => 0);
+        $defaults = array('role_name' => '', 'product_id' => '', 'product_ids' => array(), 'id' => 0, 'limit' => 0, 'offset' => 0);
         $args = wp_parse_args($args, $defaults);
         
         // SECURITY: Input validation and sanitization
         $args['role_name'] = sanitize_text_field($args['role_name']);
         $args['product_id'] = intval($args['product_id']);
+        $args['id'] = absint($args['id']);
         $args['limit'] = intval($args['limit']);
         $args['offset'] = intval($args['offset']);
+        if (!is_array($args['product_ids'])) {
+            $args['product_ids'] = array();
+        }
+        $args['product_ids'] = array_map('absint', array_filter($args['product_ids']));
         
         // Validate limits to prevent excessive queries
         if ($args['limit'] > 1000) {
@@ -447,19 +452,34 @@ class MaxtDesign_RBP_Core {
         $where_values = array();
         
         // Optimize query based on available parameters to leverage indexes
-        if (!empty($args['role_name']) && !empty($args['product_id'])) {
-            // Use compound index (role_name, product_id) for best performance
-            $where_conditions[] = 'role_name = %s AND product_id = %d';
-            $where_values[] = $args['role_name'];
-            $where_values[] = $args['product_id'];
+        $product_ids_for_query = !empty($args['product_ids']) ? $args['product_ids'] : ($args['product_id'] ? array($args['product_id']) : array());
+        
+        if (!empty($args['id'])) {
+            $where_conditions[] = 'id = %d';
+            $where_values[] = $args['id'];
+        } elseif (!empty($args['role_name']) && !empty($product_ids_for_query)) {
+            if (count($product_ids_for_query) === 1) {
+                $where_conditions[] = 'role_name = %s AND product_id = %d';
+                $where_values[] = $args['role_name'];
+                $where_values[] = $product_ids_for_query[0];
+            } else {
+                $placeholders = implode(',', array_fill(0, count($product_ids_for_query), '%d'));
+                $where_conditions[] = 'role_name = %s AND product_id IN (' . $placeholders . ')';
+                $where_values[] = $args['role_name'];
+                $where_values = array_merge($where_values, $product_ids_for_query);
+            }
         } elseif (!empty($args['role_name'])) {
-            // Use role_name index
             $where_conditions[] = 'role_name = %s';
             $where_values[] = $args['role_name'];
-        } elseif (!empty($args['product_id'])) {
-            // Use product_id index
-            $where_conditions[] = 'product_id = %d';
-            $where_values[] = $args['product_id'];
+        } elseif (!empty($product_ids_for_query)) {
+            if (count($product_ids_for_query) === 1) {
+                $where_conditions[] = 'product_id = %d';
+                $where_values[] = $product_ids_for_query[0];
+            } else {
+                $placeholders = implode(',', array_fill(0, count($product_ids_for_query), '%d'));
+                $where_conditions[] = 'product_id IN (' . $placeholders . ')';
+                $where_values = array_merge($where_values, $product_ids_for_query);
+            }
         }
         
         $where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
@@ -534,7 +554,7 @@ class MaxtDesign_RBP_Core {
         $format = array();
         
         if (isset($data['discount_type'])) {
-            $update_data['discount_type'] = in_array($data['discount_type'], array('percentage', 'fixed')) ? $data['discount_type'] : 'percentage';
+            $update_data['discount_type'] = in_array($data['discount_type'], array('percentage', 'fixed', 'fixed_price')) ? $data['discount_type'] : 'percentage';
             $format[] = '%s';
         }
         
@@ -588,7 +608,7 @@ class MaxtDesign_RBP_Core {
         
         // SECURITY FIX: Get pricing rule FIRST to include rule version in cache key
         // This prevents stale cache from being returned when rules change
-        $pricing_rule = $this->get_pricing_rule($product->get_id(), $user_role);
+        $pricing_rule = $this->get_pricing_rule($product->get_id(), $user_role, $product);
         
         // Generate cache key that includes rule ID/version for validation
         $rule_version = $pricing_rule ? $pricing_rule['id'] . '_' . ($pricing_rule['updated_at'] ?? $pricing_rule['created_at']) : 'no_rule';
@@ -634,11 +654,22 @@ class MaxtDesign_RBP_Core {
         return $final_price;
     }
 
-    private function get_pricing_rule($product_id, $role_name) {
-        // First, check for product-specific rules
+    private function get_pricing_rule($product_id, $role_name, $product = null) {
+        // First, check for product-specific rules (variation or simple product)
         $rules = $this->get_rules(array('role_name' => $role_name, 'product_id' => $product_id));
         if (!empty($rules)) {
             return $rules[0];
+        }
+        
+        // For variations, fall back to parent product rule (applies to all variations)
+        if ($product && $product->is_type('variation')) {
+            $parent_id = $product->get_parent_id();
+            if ($parent_id) {
+                $rules = $this->get_rules(array('role_name' => $role_name, 'product_id' => $parent_id));
+                if (!empty($rules)) {
+                    return $rules[0];
+                }
+            }
         }
         
         // If no product-specific rule exists, check for global rules
@@ -648,11 +679,13 @@ class MaxtDesign_RBP_Core {
     }
 
     private function apply_discount($original_price, $rule) {
+        if ($rule['discount_type'] === 'fixed_price') {
+            return floatval($rule['discount_value']);
+        }
         if ($rule['discount_type'] === 'percentage') {
             return $original_price * (1 - ($rule['discount_value'] / 100));
-        } else {
-            return $original_price - $rule['discount_value'];
         }
+        return $original_price - $rule['discount_value'];
     }
 
     private function get_current_user_role() {
@@ -1197,7 +1230,7 @@ class MaxtDesign_RBP_Core {
         
         $rule_data = array(
             'role_name' => sanitize_text_field($data['role_name']),
-            'discount_type' => in_array($data['discount_type'], array('percentage', 'fixed')) ? $data['discount_type'] : 'percentage',
+            'discount_type' => in_array($data['discount_type'], array('percentage', 'fixed', 'fixed_price')) ? $data['discount_type'] : 'percentage',
             'discount_value' => floatval($data['discount_value']),
             'is_active' => isset($data['is_active']) ? intval($data['is_active']) : 1,
         );
@@ -1295,7 +1328,7 @@ class MaxtDesign_RBP_Core {
         $format = array();
         
         if (isset($data['discount_type'])) {
-            $update_data['discount_type'] = in_array($data['discount_type'], array('percentage', 'fixed')) ? $data['discount_type'] : 'percentage';
+            $update_data['discount_type'] = in_array($data['discount_type'], array('percentage', 'fixed', 'fixed_price')) ? $data['discount_type'] : 'percentage';
             $format[] = '%s';
         }
         
