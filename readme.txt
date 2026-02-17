@@ -4,18 +4,18 @@ Donate link: https://maxtdesign.com/
 Tags: woocommerce, pricing, wholesale, discounts, membership
 Requires at least: 6.2
 Tested up to: 6.9
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 Requires PHP: 7.4
 WC requires at least: 5.0
 WC tested up to: 8.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Free role-based pricing for WooCommerce. Create customer groups and apply simple percentage or fixed discounts across your catalog.
+Free role-based pricing for WooCommerce. Create customer groups and apply percentage off, amount off, or exact set-price rules across your catalog.
 
 == Description ==
 
-Transform your WooCommerce store with role-based pricing. This free plugin lets you create price rules for different customer groups using percentage or fixed discounts — no subscriptions, no upsells, and no complex setup.
+Transform your WooCommerce store with role-based pricing. This free plugin lets you create price rules for different customer groups using percentage, amount-off, or set-price rules — no subscriptions, no upsells, and no complex setup.
 
 **Perfect for:**
 * Wholesale and B2B businesses with volume pricing
@@ -26,17 +26,22 @@ Transform your WooCommerce store with role-based pricing. This free plugin lets 
 
 **Why Choose This Plugin:**
 * **Completely Free** - No subscriptions, upsells, or hidden limits
-* **Flexible Pricing Rules** - Percentage or fixed discounts per role
+* **Flexible Pricing Rules** - Percentage off, amount off, or set price per role
 * **Built-in Performance Optimization** - Advanced caching prevents slowdowns
 * **No External Dependencies** - Self-contained with no API requirements
 * **Professional Grade** - Enterprise-level features without enterprise costs
 
 **Key Features:**
 * **Role-Based Pricing Rules** - Set global rules; product-level overrides supported
-* **Two Discount Types** - Percentage or fixed amount reductions
+* **Three Discount Types** - Percentage off, amount off, or set exact price
 * **Customer Group Management** - Create up to 3 custom user roles
 * **Optimized Performance** - Built-in caching with automatic optimization
 * **WooCommerce HPOS Compatible** - Full support for High-Performance Order Storage
+
+**Discount Types Explained:**
+* **Percentage** - Subtract X% from the price (e.g. 20% off $100 = $80)
+* **Amount Off** - Subtract a fixed amount (e.g. $10 off $50 = $40)
+* **Set Price** - Replace the price with an exact amount (e.g. set to $35 regardless of regular price). Ideal for variation-specific wholesale prices.
 
 **How Membership Pricing Works:**
 1. Create customer groups or use existing WordPress roles
@@ -75,11 +80,11 @@ Free alternative to paid pricing plugins. No subscriptions, no usage caps, and n
 
 = How do I set up membership pricing tiers? =
 
-Navigate to WooCommerce > Role-Based Pricing, create custom roles for each tier (Bronze, Silver, Gold), then set percentage or fixed discounts for each membership level. Members automatically see their tier pricing when logged in.
+Navigate to WooCommerce > Role-Based Pricing, create custom roles for each tier (Bronze, Silver, Gold), then set percentage off, amount off, or exact set price for each membership level. Members automatically see their tier pricing when logged in.
 
 = Can I offer discounts based on customer groups? =
 
-Yes. Create a role (e.g., Wholesale) and assign a percentage or fixed discount. You can also set product-specific overrides when needed.
+Yes. Create a role (e.g., Wholesale) and assign a percentage off, amount off, or set price. You can also set product-specific overrides when needed.
 
 = Does it work for customer groups and price levels? =
 
@@ -87,7 +92,7 @@ Yes. You can use existing WordPress roles or create up to 3 custom roles. Each r
 
 = How do I create volume discounts for wholesale customers? =
 
-Create a "Wholesale" customer group, assign a discount percentage (e.g., 25% off), and assign wholesale customers to this role. They'll automatically see discounted prices on all products.
+Create a "Wholesale" customer group, assign a discount (e.g., 25% off, $5 off, or set price to $50), and assign wholesale customers to this role. They'll automatically see discounted prices on all products.
 
 = What's the performance impact on my store? =
 
@@ -95,11 +100,11 @@ The plugin is optimized for high performance with advanced caching, indexed data
 
 = Is it compatible with variable products and variations? =
 
-Yes, it works with all WooCommerce product types including simple products, variable products, grouped products, and individual variations. Each variation can have role-specific pricing.
+Yes. You can apply rules to all variations or to individual variations. Use "Set Price" to give a specific variation an exact price (e.g. $35) regardless of its regular price. Use "Amount Off" to subtract a fixed amount, or "Percentage" for percentage discounts.
 
 = Can I override global pricing for specific products? =
 
-Absolutely. Product-specific pricing rules always override global rules, giving you complete flexibility to set special pricing while maintaining global defaults.
+Absolutely. Product-specific pricing rules always override global rules. For variable products, you can apply rules to all variations or choose a specific variation. Variation-specific rules override parent rules.
 
 = Does it work with other WooCommerce plugins? =
 
@@ -127,6 +132,13 @@ Community support is available through the WordPress.org forums.
 
 == Changelog ==
 
+= 1.1.0 =
+* **Set Price** - New discount type sets an exact price (e.g. $35) regardless of regular price
+* **Variation-level rules** - Apply rules to all variations or specific variations on variable products
+* **Improved labels** - "Amount Off" (subtract $X) and "Set Price" (exact price) for clearer UX
+* Parent rule fallback: variations inherit parent product rules when no variation-specific rule exists
+* Works with global rules and product-specific rules
+
 = 1.0.0 =
 * Initial release (free)
 * Global and product-specific pricing rules
@@ -137,6 +149,9 @@ Community support is available through the WordPress.org forums.
 * Zero external dependencies
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+New Set Price option for exact pricing, variation-level rules, and clearer discount type labels. Upgrade for free.
 
 = 1.0.0 =
 Launch version of Role-Based Pricing for WooCommerce. Professional membership pricing, wholesale discounts, and customer group management without monthly fees.

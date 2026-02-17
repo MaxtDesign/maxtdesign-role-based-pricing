@@ -149,8 +149,8 @@ class MaxtDesign_RBP_Admin {
                 woocommerce_wp_select(array('id' => 'maxtdesign_rbp_target_product', 'label' => __('Apply to', 'maxtdesign-role-based-pricing'), 'options' => $target_options, 'desc_tip' => true, 'description' => __('Apply this rule to all variations or a specific variation.', 'maxtdesign-role-based-pricing')));
             }
             woocommerce_wp_select(array('id' => 'maxtdesign_rbp_role_name', 'label' => __('User Role', 'maxtdesign-role-based-pricing'), 'options' => $role_options, 'desc_tip' => true, 'description' => __('Select the user role for this pricing rule.', 'maxtdesign-role-based-pricing')));
-            woocommerce_wp_select(array('id' => 'maxtdesign_rbp_discount_type', 'label' => __('Discount Type', 'maxtdesign-role-based-pricing'), 'options' => array('percentage' => __('Percentage', 'maxtdesign-role-based-pricing'), 'fixed' => __('Fixed Amount', 'maxtdesign-role-based-pricing'), 'fixed_price' => __('Fixed Price', 'maxtdesign-role-based-pricing')), 'desc_tip' => true, 'description' => __('Fixed Price sets an exact price regardless of regular price.', 'maxtdesign-role-based-pricing')));
-            woocommerce_wp_text_input(array('id' => 'maxtdesign_rbp_discount_value', 'label' => __('Discount Value', 'maxtdesign-role-based-pricing'), 'type' => 'number', 'custom_attributes' => array('step' => '0.01', 'min' => '0'), 'desc_tip' => true, 'description' => __('Percentage, amount off, or exact price (for Fixed Price).', 'maxtdesign-role-based-pricing')));
+            woocommerce_wp_select(array('id' => 'maxtdesign_rbp_discount_type', 'label' => __('Discount Type', 'maxtdesign-role-based-pricing'), 'options' => array('percentage' => __('Percentage', 'maxtdesign-role-based-pricing'), 'fixed' => __('Amount Off', 'maxtdesign-role-based-pricing'), 'fixed_price' => __('Set Price', 'maxtdesign-role-based-pricing')), 'desc_tip' => true, 'description' => __('Set Price uses an exact price regardless of regular price.', 'maxtdesign-role-based-pricing')));
+            woocommerce_wp_text_input(array('id' => 'maxtdesign_rbp_discount_value', 'label' => __('Discount Value', 'maxtdesign-role-based-pricing'), 'type' => 'number', 'custom_attributes' => array('step' => '0.01', 'min' => '0'), 'desc_tip' => true, 'description' => __('Percentage off, amount to subtract, or exact price (for Set Price).', 'maxtdesign-role-based-pricing')));
             echo '<p class="form-field"><button type="button" class="button button-primary" id="maxtdesign-rbp-add-rule">' . esc_html__('Add Pricing Rule', 'maxtdesign-role-based-pricing') . '</button></p>';
             if ($is_variable) {
                 echo '<script type="text/javascript">var maxtdesign_rbp_roles_by_product = ' . wp_json_encode($roles_used_by_product) . ';</script>';
@@ -427,7 +427,7 @@ class MaxtDesign_RBP_Admin {
             wp_send_json_error(__('Discount value must be greater than 0.', 'maxtdesign-role-based-pricing'));
         }
         if ($discount_type === 'fixed_price' && $discount_value < 0) {
-            wp_send_json_error(__('Fixed price cannot be negative.', 'maxtdesign-role-based-pricing'));
+            wp_send_json_error(__('Set price cannot be negative.', 'maxtdesign-role-based-pricing'));
         }
         
         if ($discount_type === 'percentage' && $discount_value > 100) {
@@ -532,7 +532,7 @@ class MaxtDesign_RBP_Admin {
                     var val = parseFloat(discountValue);
                     if (discountType === 'fixed_price') {
                         if (isNaN(val) || val < 0) {
-                            alert('" . esc_js(__('Fixed price must be 0 or greater.', 'maxtdesign-role-based-pricing')) . "');
+                            alert('" . esc_js(__('Set price must be 0 or greater.', 'maxtdesign-role-based-pricing')) . "');
                             return;
                         }
                     } else if (!discountValue || val <= 0) {
@@ -1089,12 +1089,12 @@ class MaxtDesign_RBP_Admin {
         $type = $rule['discount_type'] ?? 'percentage';
         $value = $rule['discount_value'] ?? 0;
         if ($type === 'fixed_price') {
-            return array(__('Fixed Price', 'maxtdesign-role-based-pricing'), wc_price($value));
+            return array(__('Set Price', 'maxtdesign-role-based-pricing'), wc_price($value));
         }
         if ($type === 'percentage') {
             return array(__('Percentage', 'maxtdesign-role-based-pricing'), $value . '%');
         }
-        return array(__('Fixed Amount', 'maxtdesign-role-based-pricing'), wc_price($value));
+        return array(__('Amount Off', 'maxtdesign-role-based-pricing'), wc_price($value));
     }
 
     private function get_role_display_name($role_name) {
@@ -1150,10 +1150,10 @@ class MaxtDesign_RBP_Admin {
                     <td>
                         <select id="global_discount_type" name="discount_type" required>
                             <option value="percentage"><?php esc_html_e('Percentage', 'maxtdesign-role-based-pricing'); ?></option>
-                            <option value="fixed"><?php esc_html_e('Fixed Amount', 'maxtdesign-role-based-pricing'); ?></option>
-                            <option value="fixed_price"><?php esc_html_e('Fixed Price', 'maxtdesign-role-based-pricing'); ?></option>
+                            <option value="fixed"><?php esc_html_e('Amount Off', 'maxtdesign-role-based-pricing'); ?></option>
+                            <option value="fixed_price"><?php esc_html_e('Set Price', 'maxtdesign-role-based-pricing'); ?></option>
                         </select>
-                        <p class="description"><?php esc_html_e('Fixed Price sets an exact price for all products. Use with caution.', 'maxtdesign-role-based-pricing'); ?></p>
+                        <p class="description"><?php esc_html_e('Set Price uses an exact price for all products. Use with caution.', 'maxtdesign-role-based-pricing'); ?></p>
                     </td>
                 </tr>
                 <tr>
@@ -1196,10 +1196,10 @@ class MaxtDesign_RBP_Admin {
                             <label for="edit_discount_type"><?php esc_html_e('Discount Type', 'maxtdesign-role-based-pricing'); ?></label>
                             <select id="edit_discount_type" name="discount_type" required>
                                 <option value="percentage"><?php esc_html_e('Percentage', 'maxtdesign-role-based-pricing'); ?></option>
-                                <option value="fixed"><?php esc_html_e('Fixed Amount', 'maxtdesign-role-based-pricing'); ?></option>
-                                <option value="fixed_price"><?php esc_html_e('Fixed Price', 'maxtdesign-role-based-pricing'); ?></option>
+                                <option value="fixed"><?php esc_html_e('Amount Off', 'maxtdesign-role-based-pricing'); ?></option>
+                                <option value="fixed_price"><?php esc_html_e('Set Price', 'maxtdesign-role-based-pricing'); ?></option>
                             </select>
-                            <p class="description"><?php esc_html_e('Choose whether to apply a percentage or fixed amount discount.', 'maxtdesign-role-based-pricing'); ?></p>
+                            <p class="description"><?php esc_html_e('Choose: percentage off, amount off, or set price.', 'maxtdesign-role-based-pricing'); ?></p>
                         </div>
                         
                         <div class="maxtdesign-rbp-form-group">
@@ -1237,7 +1237,7 @@ class MaxtDesign_RBP_Admin {
             wp_send_json_error(__('Discount value must be greater than 0.', 'maxtdesign-role-based-pricing'));
         }
         if ($discount_type === 'fixed_price' && $discount_value < 0) {
-            wp_send_json_error(__('Fixed price cannot be negative.', 'maxtdesign-role-based-pricing'));
+            wp_send_json_error(__('Set price cannot be negative.', 'maxtdesign-role-based-pricing'));
         }
         
         if (!in_array($discount_type, array('percentage', 'fixed', 'fixed_price'))) {
@@ -1565,7 +1565,7 @@ class MaxtDesign_RBP_Admin {
             wp_send_json_error(__('Discount value must be greater than 0.', 'maxtdesign-role-based-pricing'));
         }
         if ($discount_type === 'fixed_price' && $discount_value < 0) {
-            wp_send_json_error(__('Fixed price cannot be negative.', 'maxtdesign-role-based-pricing'));
+            wp_send_json_error(__('Set price cannot be negative.', 'maxtdesign-role-based-pricing'));
         }
         
         if ($discount_type === 'percentage' && $discount_value > 100) {
@@ -1615,7 +1615,7 @@ class MaxtDesign_RBP_Admin {
             wp_send_json_error(__('Discount value must be greater than 0.', 'maxtdesign-role-based-pricing'));
         }
         if ($discount_type === 'fixed_price' && $discount_value < 0) {
-            wp_send_json_error(__('Fixed price cannot be negative.', 'maxtdesign-role-based-pricing'));
+            wp_send_json_error(__('Set price cannot be negative.', 'maxtdesign-role-based-pricing'));
         }
         
         if ($discount_type === 'percentage' && $discount_value > 100) {

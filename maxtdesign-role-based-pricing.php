@@ -3,7 +3,7 @@
  * Plugin Name: MaxtDesign Role-Based Pricing for WooCommerce
  * Plugin URI: https://wordpress.org/plugins/maxtdesign-role-based-pricing
  * Description: Professional role-based pricing for WooCommerce. Set different prices for different user roles with percentage or fixed discounts.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: MaxtDesign
  * Author URI: https://maxtdesign.com
  * Text Domain: maxtdesign-role-based-pricing
@@ -25,7 +25,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('MAXTDESIGN_RBP_VERSION', '1.0.0');
+define('MAXTDESIGN_RBP_VERSION', '1.1.0');
 define('MAXTDESIGN_RBP_PLUGIN_FILE', __FILE__);
 define('MAXTDESIGN_RBP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('MAXTDESIGN_RBP_PLUGIN_URL', plugin_dir_url(__FILE__));
