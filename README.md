@@ -1,6 +1,6 @@
 # MaxtDesign Role-Based Pricing for WooCommerce
 
-> **Version:** 1.0.0  
+> **Version:** 1.1.0  
 > **Requires:** WordPress 6.2+, WooCommerce 5.0+, PHP 7.4+  
 > **License:** GPL v2 or later
 
@@ -220,7 +220,13 @@ Have an idea? Submit feature requests through:
 
 ## 📋 Changelog
 
-### 1.0.0 (Current)
+### 1.1.0 (Current)
+- **Set Price** - New discount type sets an exact price regardless of regular price
+- **Variation-level rules** - Apply rules to all variations or specific variations
+- **Clearer labels** - Amount Off and Set Price for better UX
+- Parent rule fallback for variations
+
+### 1.0.0
 - Initial release with professional-grade features
 - Global and product-specific pricing rules
 - Customer group creation and management (up to 3 custom groups)
