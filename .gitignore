@@ -63,3 +63,10 @@ assets/screenshot-*.png
 
 # SVN and deployment files
 SVN_UPLOAD_INSTRUCTIONS.md
+
+# wp.org agent tooling (D030) — *.md rule above would ignore these
+!.claude/
+!.claude/skills/
+!.claude/learning/
+!.claude/skills/wporg-release.md
+!.claude/learning/wporg-release.md
