@@ -81,9 +81,9 @@ class MaxtDesign_RBP_Core {
         global $wpdb;
         // Table names are hardcoded class properties built from $wpdb->prefix; %s placeholders
         // are invalid for SQL identifiers, so the table name is interpolated directly.
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $result1 = $wpdb->query("DROP TABLE IF EXISTS `{$this->table_name}`");
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $result2 = $wpdb->query("DROP TABLE IF EXISTS `{$this->global_table_name}`");
         return $result1 !== false && $result2 !== false;
     }
@@ -119,7 +119,7 @@ class MaxtDesign_RBP_Core {
             if (!$this->index_exists($this->table_name, $index_name)) {
                 // Table name and index DDL fragment are not valid %s placeholders; both are
                 // hardcoded values not derived from user input.
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 $result = $wpdb->query("ALTER TABLE `{$this->table_name}` ADD {$index_sql}");
                 if ($result !== false) {
                     $indexes_added++;
@@ -140,7 +140,7 @@ class MaxtDesign_RBP_Core {
             if (!$this->index_exists($this->global_table_name, $index_name)) {
                 // Table name and index DDL fragment are not valid %s placeholders; both are
                 // hardcoded values not derived from user input.
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 $result = $wpdb->query("ALTER TABLE `{$this->global_table_name}` ADD {$index_sql}");
                 if ($result !== false) {
                     $indexes_added++;
@@ -506,7 +506,7 @@ class MaxtDesign_RBP_Core {
                 $prepared_sql = $sql;
             }
             
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Caching implemented at higher level, SQL is prepared above with validated parameters
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $prepared_sql is built from $wpdb->prepare() on line 506 with validated parameters; caching is handled at a higher layer
             $results = $wpdb->get_results($prepared_sql, ARRAY_A);
             
             // Log query performance for monitoring
@@ -1335,7 +1335,7 @@ class MaxtDesign_RBP_Core {
         if (false === $results) {
             global $wpdb;
             $sql = "SELECT * FROM {$this->global_table_name} ORDER BY role_name ASC";
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Caching implemented via wp_cache_get/set above, table name is hardcoded class property
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Caching implemented via wp_cache_get/set above; table name is hardcoded class property, not user input
             $results = $wpdb->get_results($sql, ARRAY_A);
             
             // Cache results for 12 hours (global rules rarely change)

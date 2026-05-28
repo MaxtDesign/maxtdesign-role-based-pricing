@@ -65,7 +65,7 @@ function maxtdesign_rbp_delete_tables() {
     
     foreach ($tables as $table) {
         $sql = "DROP TABLE IF EXISTS `{$table}`";
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Schema change required for uninstall, table name is validated and prefixed
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Schema change required for uninstall; table name is hardcoded (wpdb prefix + plugin slug)
         $wpdb->query($sql);
     }
 }
@@ -98,30 +98,35 @@ function maxtdesign_rbp_delete_options() {
  */
 function maxtdesign_rbp_delete_transients() {
     global $wpdb;
-    
-    // Delete plugin transients
+
+    // Uninstall cleanup — direct DELETEs are required (transient API can't bulk-delete by prefix),
+    // and the surrounding wp_cache_flush() in maxtdesign_rbp_clear_cache() makes per-row caching moot.
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     $wpdb->query(
         $wpdb->prepare(
             "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
             $wpdb->esc_like('_transient_maxtdesign_rbp_') . '%'
         )
     );
-    
+
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     $wpdb->query(
         $wpdb->prepare(
             "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
             $wpdb->esc_like('_transient_timeout_maxtdesign_rbp_') . '%'
         )
     );
-    
+
     // Delete legacy transients (old prefix)
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     $wpdb->query(
         $wpdb->prepare(
             "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
             $wpdb->esc_like('_transient_maxt_rbp_') . '%'
         )
     );
-    
+
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     $wpdb->query(
         $wpdb->prepare(
             "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
@@ -135,16 +140,19 @@ function maxtdesign_rbp_delete_transients() {
  */
 function maxtdesign_rbp_delete_post_meta() {
     global $wpdb;
-    
-    // Delete product-specific pricing rules meta
+
+    // Uninstall cleanup — direct DELETEs by meta_key prefix; delete_post_meta_by_key() exists but
+    // would require one call per row and we can't enumerate the keys without a query first.
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     $wpdb->query(
         $wpdb->prepare(
             "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE %s",
             $wpdb->esc_like('_maxtdesign_rbp_') . '%'
         )
     );
-    
+
     // Delete legacy meta (old prefix)
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     $wpdb->query(
         $wpdb->prepare(
             "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE %s",
@@ -158,16 +166,19 @@ function maxtdesign_rbp_delete_post_meta() {
  */
 function maxtdesign_rbp_delete_user_meta() {
     global $wpdb;
-    
-    // Delete user meta
+
+    // Uninstall cleanup — direct DELETEs by meta_key prefix; delete_user_meta() exists but
+    // would require one call per user-row and we can't enumerate without a query first.
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     $wpdb->query(
         $wpdb->prepare(
             "DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE %s",
             $wpdb->esc_like('maxtdesign_rbp_') . '%'
         )
     );
-    
+
     // Delete legacy user meta (old prefix)
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     $wpdb->query(
         $wpdb->prepare(
             "DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE %s",
