@@ -3,11 +3,11 @@ Contributors: slaacr
 Donate link: https://maxtdesign.com/
 Tags: woocommerce, pricing, wholesale, discounts, membership
 Requires at least: 6.2
-Tested up to: 6.9
-Stable tag: 1.1.0
+Tested up to: 7.0
+Stable tag: 1.1.1
 Requires PHP: 7.4
-WC requires at least: 5.0
-WC tested up to: 8.5
+WC requires at least: 7.0
+WC tested up to: 10.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -63,7 +63,7 @@ Free alternative to paid pricing plugins. No subscriptions, no usage caps, and n
 
 == Installation ==
 
-1. Upload the plugin files to the `/wp-content/plugins/woocommerce-role-based-pricing` directory, or install through the WordPress plugins screen
+1. Upload the plugin files to the `/wp-content/plugins/maxtdesign-role-based-pricing` directory, or install through the WordPress plugins screen
 2. Activate the plugin through the 'Plugins' screen in WordPress
 3. Ensure WooCommerce is installed and activated (required)
 4. Navigate to WooCommerce > Role-Based Pricing to configure your pricing rules
@@ -71,8 +71,8 @@ Free alternative to paid pricing plugins. No subscriptions, no usage caps, and n
 6. Set up global pricing rules or optional product-specific overrides
 
 **System Requirements:**
-* WordPress 5.0 or higher
-* WooCommerce 5.0 or higher  
+* WordPress 6.2 or higher
+* WooCommerce 7.0 or higher
 * PHP 7.4 or higher
 * MySQL 5.6 or higher
 
@@ -132,6 +132,14 @@ Community support is available through the WordPress.org forums.
 
 == Changelog ==
 
+= 1.1.1 =
+* **WordPress 7.0 "Armstrong" compatibility** - Tested up to WordPress 7.0
+* **WooCommerce 10.8 compatibility** - Tested up to WooCommerce 10.8; minimum WooCommerce raised to 7.0 to align with HPOS support
+* Fixed: `drop_table()`, `add_database_indexes()`, and `get_table_sizes()` queries used `%s` placeholders for table identifiers, which is invalid in `wpdb::prepare()` — these now run correctly so database health and index migration work as intended
+* Fixed: Cache warming on HPOS stores — popular-products lookup now uses `wc_get_orders()` instead of the legacy post-table join, so the "Warm Cache" admin action works whether you have HPOS enabled or not
+* Hardened: Transient-cleanup queries now use `wpdb::esc_like()` + prepared statements
+* Readme: corrected the install-path slug and aligned System Requirements with the plugin header
+
 = 1.1.0 =
 * **Set Price** - New discount type sets an exact price (e.g. $35) regardless of regular price
 * **Variation-level rules** - Apply rules to all variations or specific variations on variable products
@@ -149,6 +157,9 @@ Community support is available through the WordPress.org forums.
 * Zero external dependencies
 
 == Upgrade Notice ==
+
+= 1.1.1 =
+WordPress 7.0 and WooCommerce 10.8 compatibility audit. Fixes broken table-management and HPOS-aware cache warming. Recommended for everyone.
 
 = 1.1.0 =
 New Set Price option for exact pricing, variation-level rules, and clearer discount type labels. Upgrade for free.

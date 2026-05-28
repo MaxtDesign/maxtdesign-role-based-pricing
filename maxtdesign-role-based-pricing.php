@@ -3,16 +3,16 @@
  * Plugin Name: MaxtDesign Role-Based Pricing for WooCommerce
  * Plugin URI: https://wordpress.org/plugins/maxtdesign-role-based-pricing
  * Description: Professional role-based pricing for WooCommerce. Set different prices for different user roles with percentage or fixed discounts.
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: MaxtDesign
  * Author URI: https://maxtdesign.com
  * Text Domain: maxtdesign-role-based-pricing
  * Requires at least: 6.2
- * Tested up to: 6.9
+ * Tested up to: 7.0
  * Requires PHP: 7.4
  * Requires Plugins: woocommerce
- * WC requires at least: 5.0
- * WC tested up to: 8.5
+ * WC requires at least: 7.0
+ * WC tested up to: 10.8
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  *
@@ -25,7 +25,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('MAXTDESIGN_RBP_VERSION', '1.1.0');
+define('MAXTDESIGN_RBP_VERSION', '1.1.1');
 define('MAXTDESIGN_RBP_PLUGIN_FILE', __FILE__);
 define('MAXTDESIGN_RBP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('MAXTDESIGN_RBP_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -707,10 +707,12 @@ class MaxtDesign_Role_Based_Pricing {
                 } else {
                     // Fallback for shared hosting environments
                     global $wpdb;
-                    // @codingStandardsIgnoreLine - Direct database query required for cache clearing
-                    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_maxtdesign_rbp_user_%'");
-                    // @codingStandardsIgnoreLine - Direct database query required for cache clearing
-                    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_maxtdesign_rbp_user_%'");
+                    $like = $wpdb->esc_like('_transient_maxtdesign_rbp_user_') . '%';
+                    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like));
+                    $like_t = $wpdb->esc_like('_transient_timeout_maxtdesign_rbp_user_') . '%';
+                    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like_t));
                 }
             }
         } catch (Exception $e) {
@@ -1007,19 +1009,23 @@ class MaxtDesign_Role_Based_Pricing {
 
         // Clear all transients and cache entries
         global $wpdb;
-        // @codingStandardsIgnoreLine - Direct database query required for plugin cleanup
-        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_maxtdesign_rbp_%'");
-        // @codingStandardsIgnoreLine - Direct database query required for plugin cleanup
-        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_maxtdesign_rbp_%'");
-        // @codingStandardsIgnoreLine - Direct database query required for plugin cleanup
-        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE 'maxtdesign_rbp_%'");
+        $like_transient   = $wpdb->esc_like('_transient_maxtdesign_rbp_') . '%';
+        $like_timeout     = $wpdb->esc_like('_transient_timeout_maxtdesign_rbp_') . '%';
+        $like_option      = $wpdb->esc_like('maxtdesign_rbp_') . '%';
+        $like_debug       = '%' . $wpdb->esc_like('maxtdesign_rbp_debug') . '%';
+
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like_transient));
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like_timeout));
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like_option));
+        // phpcs:enable
 
         // Clear any cached data
         wp_cache_flush();
 
         // Remove any debug logs related to this plugin
-        // @codingStandardsIgnoreLine - Direct database query required for plugin cleanup
-        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '%maxtdesign_rbp_debug%'");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like_debug));
     }
 }
 

@@ -1,7 +1,8 @@
 # MaxtDesign Role-Based Pricing for WooCommerce
 
-> **Version:** 1.1.0  
-> **Requires:** WordPress 6.2+, WooCommerce 5.0+, PHP 7.4+  
+> **Version:** 1.1.1  
+> **Requires:** WordPress 6.2+, WooCommerce 7.0+, PHP 7.4+  
+> **Tested with:** WordPress 7.0, WooCommerce 10.8  
 > **License:** GPL v2 or later
 
 Transform your WooCommerce store into a powerful B2B and wholesale platform with professional role-based pricing. Create membership tiers, wholesale discounts, and custom pricing for different user groups—no monthly fees, no subscriptions, no limits.
@@ -72,47 +73,13 @@ Transform your WooCommerce store into a powerful B2B and wholesale platform with
 
 ---
 
-## 📚 Full Documentation
+## 📚 Documentation & Support
 
-### Getting Started
-- [Installation Guide](docs/getting-started/installation.md) - Detailed installation and system requirements
-- [Initial Setup](docs/getting-started/initial-setup.md) - Complete configuration walkthrough
-- [Your First Pricing Rule](docs/getting-started/first-pricing-rule.md) - Step-by-step guide
-- [Common Configurations](docs/getting-started/common-configurations.md) - Real-world examples
+User-facing documentation, FAQs, and the changelog live on the plugin's WordPress.org listing:
+https://wordpress.org/plugins/maxtdesign-role-based-pricing/
 
-### Features
-- [Global Pricing Rules](docs/features/global-pricing-rules.md) - Site-wide discounts
-- [Product-Specific Pricing](docs/features/product-specific-pricing.md) - Override global rules
-- [Role Management](docs/features/role-management.md) - Create and manage customer groups
-- [Frontend Display](docs/features/frontend-display.md) - How prices appear to customers
-- [Sale Badge Handling](docs/features/sale-badge-handling.md) - Compatibility with sale prices
-
-### Advanced Usage
-- [Hooks and Filters](docs/advanced/hooks-and-filters.md) - Developer customization
-- [Custom Integrations](docs/advanced/custom-integrations.md) - Extend functionality
-- [Performance Optimization](docs/advanced/performance-optimization.md) - Speed tuning
-- [Caching System](docs/advanced/caching-system.md) - How caching works
-- [HPOS Compatibility](docs/advanced/hpos-compatibility.md) - High-Performance Order Storage
-
-### For Developers
-- [Architecture Overview](docs/developers/architecture-overview.md) - Plugin structure
-- [Database Schema](docs/developers/database-schema.md) - Table structure and indexes
-- [Code Examples](docs/developers/code-examples.md) - Practical code snippets
-- [Extending the Plugin](docs/developers/extending-the-plugin.md) - Build custom features
-- [Testing Guidelines](docs/developers/testing-guidelines.md) - Testing best practices
-
-### Troubleshooting
-- [Common Issues](docs/troubleshooting/common-issues.md) - Frequently encountered problems
-- [Debugging Guide](docs/troubleshooting/debugging-guide.md) - Enable debug mode
-- [Cache Problems](docs/troubleshooting/cache-problems.md) - Cache-related issues
-- [Price Not Showing](docs/troubleshooting/price-not-showing.md) - Price display issues
-- [Variable Products](docs/troubleshooting/variable-products.md) - Variation-specific issues
-
-### Reference
-- [Settings Reference](docs/reference/settings-reference.md) - All plugin settings
-- [Capability Reference](docs/reference/capability-reference.md) - WordPress capabilities
-- [Filter Reference](docs/reference/filter-reference.md) - All available filters
-- [Action Reference](docs/reference/action-reference.md) - All available actions
+For community help and bug reports, use the support forum:
+https://wordpress.org/support/plugin/maxtdesign-role-based-pricing/
 
 ---
 
@@ -151,14 +118,14 @@ Minimum Purchase: Set in WooCommerce settings
 
 **Minimum:**
 - WordPress 6.2 or higher
-- WooCommerce 5.0 or higher
+- WooCommerce 7.0 or higher
 - PHP 7.4 or higher
 - MySQL 5.6 or higher
 
 **Recommended:**
-- WordPress 6.9+
-- WooCommerce 8.5+
-- PHP 8.0+
+- WordPress 7.0+
+- WooCommerce 10.8+
+- PHP 8.1+
 - MySQL 8.0+ or MariaDB 10.5+
 - Object caching (Redis/Memcached) for optimal performance
 
@@ -170,9 +137,6 @@ Minimum Purchase: Set in WooCommerce settings
 ---
 
 ## 🤝 Support
-
-### Documentation
-All documentation is available in the [docs](docs/) folder with detailed guides, code examples, and troubleshooting steps.
 
 ### WordPress.org Support Forum
 For general questions and community support:
@@ -220,7 +184,15 @@ Have an idea? Submit feature requests through:
 
 ## 📋 Changelog
 
-### 1.1.0 (Current)
+### 1.1.1 (Current)
+- WordPress 7.0 "Armstrong" and WooCommerce 10.8 compatibility (tested-up-to bumps)
+- Raised WooCommerce minimum to 7.0 to align with HPOS-era stores
+- Fixed: `drop_table()`, `add_database_indexes()`, and `get_table_sizes()` queries used `%s` placeholders for table identifiers (invalid in `wpdb::prepare()`) — these now run correctly
+- Fixed: HPOS-aware cache warming — popular-products lookup now uses `wc_get_orders()` instead of the legacy post-table join
+- Hardened transient-cleanup queries with `wpdb::esc_like()` + prepared statements
+- Readme corrections: install-path slug, System Requirements alignment
+
+### 1.1.0
 - **Set Price** - New discount type sets an exact price regardless of regular price
 - **Variation-level rules** - Apply rules to all variations or specific variations
 - **Clearer labels** - Amount Off and Set Price for better UX

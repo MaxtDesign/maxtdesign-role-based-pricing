@@ -79,11 +79,13 @@ class MaxtDesign_RBP_Core {
 
     public function drop_table() {
         global $wpdb;
-        // @codingStandardsIgnoreLine - Direct database query required for table management
-        $result1 = $wpdb->query($wpdb->prepare("DROP TABLE IF EXISTS %s", $this->table_name));
-        // @codingStandardsIgnoreLine - Direct database query required for table management
-        $result2 = $wpdb->query($wpdb->prepare("DROP TABLE IF EXISTS %s", $this->global_table_name));
-        return $result1 && $result2;
+        // Table names are hardcoded class properties built from $wpdb->prefix; %s placeholders
+        // are invalid for SQL identifiers, so the table name is interpolated directly.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        $result1 = $wpdb->query("DROP TABLE IF EXISTS `{$this->table_name}`");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        $result2 = $wpdb->query("DROP TABLE IF EXISTS `{$this->global_table_name}`");
+        return $result1 !== false && $result2 !== false;
     }
 
     /**
@@ -115,8 +117,10 @@ class MaxtDesign_RBP_Core {
         
         foreach ($product_indexes as $index_name => $index_sql) {
             if (!$this->index_exists($this->table_name, $index_name)) {
-                // @codingStandardsIgnoreLine - Direct database query required for index management
-                $result = $wpdb->query($wpdb->prepare("ALTER TABLE %s ADD %s", $this->table_name, $index_sql));
+                // Table name and index DDL fragment are not valid %s placeholders; both are
+                // hardcoded values not derived from user input.
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+                $result = $wpdb->query("ALTER TABLE `{$this->table_name}` ADD {$index_sql}");
                 if ($result !== false) {
                     $indexes_added++;
                 } else {
@@ -134,8 +138,10 @@ class MaxtDesign_RBP_Core {
         
         foreach ($global_indexes as $index_name => $index_sql) {
             if (!$this->index_exists($this->global_table_name, $index_name)) {
-                // @codingStandardsIgnoreLine - Direct database query required for index management
-                $result = $wpdb->query($wpdb->prepare("ALTER TABLE %s ADD %s", $this->global_table_name, $index_sql));
+                // Table name and index DDL fragment are not valid %s placeholders; both are
+                // hardcoded values not derived from user input.
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+                $result = $wpdb->query("ALTER TABLE `{$this->global_table_name}` ADD {$index_sql}");
                 if ($result !== false) {
                     $indexes_added++;
                 } else {
@@ -343,13 +349,15 @@ class MaxtDesign_RBP_Core {
      */
     private function get_table_sizes() {
         global $wpdb;
-        
+
         $sizes = array();
-        // @codingStandardsIgnoreLine - Direct database query required for table size checking
-        $sizes[$this->table_name] = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %s", $this->table_name));
-        // @codingStandardsIgnoreLine - Direct database query required for table size checking
-        $sizes[$this->global_table_name] = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %s", $this->global_table_name));
-        
+        // Table names are hardcoded class properties, not user input. %s placeholders are not
+        // valid for SQL identifiers, so interpolate directly.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        $sizes[$this->table_name] = (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$this->table_name}`");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        $sizes[$this->global_table_name] = (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$this->global_table_name}`");
+
         return $sizes;
     }
 
@@ -1042,18 +1050,20 @@ class MaxtDesign_RBP_Core {
 
     /**
      * Warm cache for frequently accessed products
+     *
+     * When called without explicit product IDs, falls back to recent orders via the
+     * WooCommerce CRUD API (HPOS-aware). Limited to a small batch to keep the admin
+     * request responsive.
      */
     public function warm_cache($product_ids = array(), $role_names = array()) {
         if (empty($product_ids)) {
-            // Get top 10 most viewed products
             $product_ids = $this->get_popular_product_ids();
         }
-        
+
         if (empty($role_names)) {
-            // Get all roles with active rules
             $role_names = $this->get_active_role_names();
         }
-        
+
         $warmed_count = 0;
         foreach ($product_ids as $product_id) {
             $product = wc_get_product($product_id);
@@ -1088,30 +1098,43 @@ class MaxtDesign_RBP_Core {
     }
 
     /**
-     * Get popular product IDs for cache warming
+     * Get product IDs from recent orders for cache warming.
+     *
+     * Uses wc_get_orders() so the lookup works under both legacy post-table and HPOS
+     * (wc_orders) storage. Returns up to 10 distinct product IDs ordered by most recent.
      */
     private function get_popular_product_ids() {
-        global $wpdb;
-        
-        // Get products with most orders (last 30 days)
-        $sql = "
-            SELECT p.ID, COUNT(oi.order_item_id) as order_count
-            FROM {$wpdb->posts} p
-            INNER JOIN {$wpdb->prefix}woocommerce_order_items oi ON p.ID = oi.order_item_id
-            INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id
-            INNER JOIN {$wpdb->posts} o ON oi.order_id = o.ID
-            WHERE p.post_type = %s
-            AND p.post_status = %s
-            AND oim.meta_key = %s
-            AND o.post_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-            GROUP BY p.ID
-            ORDER BY order_count DESC
-            LIMIT 10
-        ";
-        
-        // @codingStandardsIgnoreLine - Direct database query required for popular products
-        $results = $wpdb->get_results($wpdb->prepare($sql, 'product', 'publish', '_product_id'), ARRAY_A);
-        return wp_list_pluck($results, 'ID');
+        if (!function_exists('wc_get_orders')) {
+            return array();
+        }
+
+        $orders = wc_get_orders(array(
+            'limit'        => 25,
+            'orderby'      => 'date',
+            'order'        => 'DESC',
+            'status'       => array('wc-processing', 'wc-completed'),
+            'date_created' => '>' . (time() - (30 * DAY_IN_SECONDS)),
+            'return'       => 'objects',
+        ));
+
+        if (empty($orders) || is_wp_error($orders)) {
+            return array();
+        }
+
+        $product_ids = array();
+        foreach ($orders as $order) {
+            foreach ($order->get_items() as $item) {
+                $pid = $item->get_product_id();
+                if ($pid && !in_array($pid, $product_ids, true)) {
+                    $product_ids[] = $pid;
+                    if (count($product_ids) >= 10) {
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        return $product_ids;
     }
 
     /**
