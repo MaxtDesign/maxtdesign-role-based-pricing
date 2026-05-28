@@ -69,6 +69,7 @@ class MaxtDesign_RBP_Admin {
                 if ($vid) {
                     $product_ids[] = $vid;
                     $var_product = wc_get_product($vid);
+                    /* translators: %d is the variation ID */
                     $variations_data[$vid] = $var_product ? $var_product->get_name() : sprintf(__('Variation #%d', 'maxtdesign-role-based-pricing'), $vid);
                 }
             }
@@ -98,7 +99,7 @@ class MaxtDesign_RBP_Admin {
                 
                 $status_display = $has_override ? '<span style="color: orange;">' . esc_html__('Overridden', 'maxtdesign-role-based-pricing') . '</span>' : '<span style="color: green;">' . esc_html__('Active', 'maxtdesign-role-based-pricing') . '</span>';
                 
-                echo '<tr><td>' . esc_html($role_display_name) . '</td><td>' . esc_html($discount_type_display) . '</td><td>' . wp_kses_post($discount_value_display) . '</td><td>' . $status_display . '</td></tr>';
+                echo '<tr><td>' . esc_html($role_display_name) . '</td><td>' . esc_html($discount_type_display) . '</td><td>' . wp_kses_post($discount_value_display) . '</td><td>' . wp_kses_post($status_display) . '</td></tr>';
             }
             echo '</tbody></table><br>';
         }
@@ -107,12 +108,12 @@ class MaxtDesign_RBP_Admin {
         if (!empty($existing_rules)) {
             $table_cols = $is_variable ? '<th>' . esc_html__('Applies To', 'maxtdesign-role-based-pricing') . '</th>' : '';
             echo '<h4>' . esc_html__('Product-Specific Pricing Rules (Override Global)', 'maxtdesign-role-based-pricing') . '</h4>';
-            echo '<table class="widefat"><thead><tr><th>' . esc_html__('Role', 'maxtdesign-role-based-pricing') . '</th>' . $table_cols . '<th>' . esc_html__('Discount Type', 'maxtdesign-role-based-pricing') . '</th><th>' . esc_html__('Discount Value', 'maxtdesign-role-based-pricing') . '</th><th>' . esc_html__('Actions', 'maxtdesign-role-based-pricing') . '</th></tr></thead><tbody>';
+            echo '<table class="widefat"><thead><tr><th>' . esc_html__('Role', 'maxtdesign-role-based-pricing') . '</th>' . wp_kses_post($table_cols) . '<th>' . esc_html__('Discount Type', 'maxtdesign-role-based-pricing') . '</th><th>' . esc_html__('Discount Value', 'maxtdesign-role-based-pricing') . '</th><th>' . esc_html__('Actions', 'maxtdesign-role-based-pricing') . '</th></tr></thead><tbody>';
             foreach ($existing_rules as $rule) {
                 $role_display_name = $this->get_role_display_name($rule['role_name']);
                 list($discount_type_display, $discount_value_display) = $this->get_discount_display($rule);
                 $applies_to_cell = $is_variable ? '<td>' . esc_html($rule['product_id'] == $product_id ? __('All variations', 'maxtdesign-role-based-pricing') : ($variations_data[$rule['product_id']] ?? '#' . $rule['product_id'])) . '</td>' : '';
-                echo '<tr><td>' . esc_html($role_display_name) . '</td>' . $applies_to_cell . '<td>' . esc_html($discount_type_display) . '</td><td>' . wp_kses_post($discount_value_display) . '</td><td>';
+                echo '<tr><td>' . esc_html($role_display_name) . '</td>' . wp_kses_post($applies_to_cell) . '<td>' . esc_html($discount_type_display) . '</td><td>' . wp_kses_post($discount_value_display) . '</td><td>';
                 echo '<button type="button" class="button button-small maxtdesign-rbp-edit-product-rule" data-rule-id="' . esc_attr($rule['id']) . '" data-role-name="' . esc_attr($rule['role_name']) . '" data-discount-type="' . esc_attr($rule['discount_type']) . '" data-discount-value="' . esc_attr($rule['discount_value']) . '">' . esc_html__('Edit', 'maxtdesign-role-based-pricing') . '</button> ';
                 echo '<a href="#" class="button button-small maxtdesign-rbp-delete-rule" data-rule-id="' . esc_attr($rule['id']) . '">' . esc_html__('Delete', 'maxtdesign-role-based-pricing') . '</a>';
                 echo '</td></tr>';

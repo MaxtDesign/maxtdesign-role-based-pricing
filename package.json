@@ -1,6 +1,6 @@
 {
   "name": "maxtdesign-role-based-pricing",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Release tooling for MaxtDesign Role-Based Pricing for WooCommerce. The plugin ships only PHP and unminified CSS — no JS or CSS build step is required.",
   "private": true,
   "scripts": {

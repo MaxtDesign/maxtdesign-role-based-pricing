@@ -81,9 +81,9 @@ class MaxtDesign_RBP_Core {
         global $wpdb;
         // Table names are hardcoded class properties built from $wpdb->prefix; %s placeholders
         // are invalid for SQL identifiers, so the table name is interpolated directly.
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $result1 = $wpdb->query("DROP TABLE IF EXISTS `{$this->table_name}`");
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $result2 = $wpdb->query("DROP TABLE IF EXISTS `{$this->global_table_name}`");
         return $result1 !== false && $result2 !== false;
     }
@@ -119,7 +119,7 @@ class MaxtDesign_RBP_Core {
             if (!$this->index_exists($this->table_name, $index_name)) {
                 // Table name and index DDL fragment are not valid %s placeholders; both are
                 // hardcoded values not derived from user input.
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 $result = $wpdb->query("ALTER TABLE `{$this->table_name}` ADD {$index_sql}");
                 if ($result !== false) {
                     $indexes_added++;
@@ -140,7 +140,7 @@ class MaxtDesign_RBP_Core {
             if (!$this->index_exists($this->global_table_name, $index_name)) {
                 // Table name and index DDL fragment are not valid %s placeholders; both are
                 // hardcoded values not derived from user input.
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 $result = $wpdb->query("ALTER TABLE `{$this->global_table_name}` ADD {$index_sql}");
                 if ($result !== false) {
                     $indexes_added++;
@@ -353,9 +353,9 @@ class MaxtDesign_RBP_Core {
         $sizes = array();
         // Table names are hardcoded class properties, not user input. %s placeholders are not
         // valid for SQL identifiers, so interpolate directly.
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $sizes[$this->table_name] = (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$this->table_name}`");
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $sizes[$this->global_table_name] = (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$this->global_table_name}`");
 
         return $sizes;
@@ -633,6 +633,7 @@ class MaxtDesign_RBP_Core {
             if ($original_price > 50 && $cached_price < 1) {
                 // Log suspicious cache entry
                 if (defined('WP_DEBUG') && WP_DEBUG) {
+                    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- WP_DEBUG-gated security telemetry for rapid-order pricing exploits.
                     error_log(sprintf(
                         'MaxtDesign RBP Cache Sanity Check Failed: Product %d, Original: $%s, Cached: $%s',
                         $product->get_id(),

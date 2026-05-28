@@ -1,6 +1,6 @@
 # MaxtDesign Role-Based Pricing for WooCommerce
 
-> **Version:** 1.1.1  
+> **Version:** 1.1.2  
 > **Requires:** WordPress 6.2+, WooCommerce 7.0+, PHP 7.4+  
 > **Tested with:** WordPress 7.0, WooCommerce 10.8  
 > **License:** GPL v2 or later
@@ -184,7 +184,11 @@ Have an idea? Submit feature requests through:
 
 ## 📋 Changelog
 
-### 1.1.1 (Current)
+### 1.1.2 (Current)
+- Plugin Check compliance pass — missing `translators:` comment, three unescaped admin echoes (`wp_kses_post()` wrap), and updated `phpcs:ignore` annotations on table-management queries
+- Added `.distignore` so the WordPress.org build pipeline excludes dev-only files from the user-installed zip
+
+### 1.1.1
 - WordPress 7.0 "Armstrong" and WooCommerce 10.8 compatibility (tested-up-to bumps)
 - Raised WooCommerce minimum to 7.0 to align with HPOS-era stores
 - Fixed: `drop_table()`, `add_database_indexes()`, and `get_table_sizes()` queries used `%s` placeholders for table identifiers (invalid in `wpdb::prepare()`) — these now run correctly

@@ -4,7 +4,7 @@ Donate link: https://maxtdesign.com/
 Tags: woocommerce, pricing, wholesale, discounts, membership
 Requires at least: 6.2
 Tested up to: 7.0
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 Requires PHP: 7.4
 WC requires at least: 7.0
 WC tested up to: 10.8
@@ -132,6 +132,13 @@ Community support is available through the WordPress.org forums.
 
 == Changelog ==
 
+= 1.1.2 =
+* Fixed: missing `translators:` comment on a `Variation #%d` placeholder string in the product meta box
+* Fixed: three admin-side `echo` statements (status badge, variation cell, variation column header) now pass through `wp_kses_post()` for explicit-by-construction safety. No behaviour change — values were already internally built — but the safety guarantee is now local to each echo, satisfying Plugin Check
+* Hardened: `phpcs:ignore` annotations on the table-management queries fixed in 1.1.1 now also list `WordPress.DB.PreparedSQL.InterpolatedNotPrepared` and `PluginCheck.Security.DirectDB.UnescapedDBParameter`. Table identifiers are still hardcoded class properties; only the lint-suppression metadata changed
+* `error_log()` calls (all already gated behind `WP_DEBUG`) carry explicit `phpcs:ignore` annotations documenting why they're retained
+* Added `.distignore` so the WordPress.org build pipeline excludes dev-only files (`.claude/`, `.git/`, `tools/`, `node_modules/`, `package.json`, `CHANGELOG.md`, etc.) from the user-installed zip, on top of the existing `tools/prepare-svn.sh` allow-list
+
 = 1.1.1 =
 * **WordPress 7.0 "Armstrong" compatibility** - Tested up to WordPress 7.0
 * **WooCommerce 10.8 compatibility** - Tested up to WooCommerce 10.8; minimum WooCommerce raised to 7.0 to align with HPOS support
@@ -157,6 +164,9 @@ Community support is available through the WordPress.org forums.
 * Zero external dependencies
 
 == Upgrade Notice ==
+
+= 1.1.2 =
+Plugin Check compliance pass: missing translators comment, three unescaped admin echoes, and lint-suppression cleanup. No behaviour changes.
 
 = 1.1.1 =
 WordPress 7.0 and WooCommerce 10.8 compatibility audit. Fixes broken table-management and HPOS-aware cache warming. Recommended for everyone.

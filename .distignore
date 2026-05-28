@@ -1,0 +1,58 @@
+# Files and directories excluded from the WordPress.org zip build.
+# WordPress.org's zip-builder reads this file and skips the listed entries
+# when packaging trunk and tags for distribution.
+#
+# This is defense-in-depth on top of tools/prepare-svn.sh's allow-list:
+# even if a dev file accidentally lands in SVN trunk, this file keeps it
+# out of the user-installed plugin.
+#
+# Pattern syntax matches the wp.org build script (gitignore-style).
+
+# Version control
+.git
+.gitignore
+.gitattributes
+.github
+
+# AI / IDE / editor metadata
+.claude
+.cursor
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Node / build tooling
+node_modules
+package.json
+package-lock.json
+npm-debug.log
+yarn-error.log
+.npmrc
+
+# Release tooling
+tools
+svn-upload
+.distignore
+
+# Developer-facing docs (readme.txt is the shipped docs)
+README.md
+CHANGELOG.md
+BUILD.md
+docs
+
+# Local test scaffolding
+tests
+phpunit.xml
+phpunit.xml.dist
+phpcs.xml
+phpcs.xml.dist
+composer.json
+composer.lock
+vendor
+
+# Build artefacts
+*.log
+*.tmp
+*.bak
+*.swp

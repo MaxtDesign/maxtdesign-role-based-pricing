@@ -3,7 +3,7 @@
  * Plugin Name: MaxtDesign Role-Based Pricing for WooCommerce
  * Plugin URI: https://wordpress.org/plugins/maxtdesign-role-based-pricing
  * Description: Professional role-based pricing for WooCommerce. Set different prices for different user roles with percentage or fixed discounts.
- * Version: 1.1.1
+ * Version: 1.1.2
  * Author: MaxtDesign
  * Author URI: https://maxtdesign.com
  * Text Domain: maxtdesign-role-based-pricing
@@ -25,7 +25,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('MAXTDESIGN_RBP_VERSION', '1.1.1');
+define('MAXTDESIGN_RBP_VERSION', '1.1.2');
 define('MAXTDESIGN_RBP_PLUGIN_FILE', __FILE__);
 define('MAXTDESIGN_RBP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('MAXTDESIGN_RBP_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -825,6 +825,7 @@ class MaxtDesign_Role_Based_Pricing {
             
             // STEP 4: Log cache clearing for debugging (only in WP_DEBUG mode)
             if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- WP_DEBUG-gated cache-clear telemetry.
                 error_log(sprintf(
                     'MaxtDesign RBP: Cleared cache after order #%d for user #%d (%d items)',
                     $order_id,
@@ -832,11 +833,12 @@ class MaxtDesign_Role_Based_Pricing {
                     count($order->get_items())
                 ));
             }
-            
+
         } catch (Exception $e) {
             // CRITICAL: Never let cache clearing break order processing
             // Silent failure - order completion must succeed even if cache clear fails
             if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- WP_DEBUG-gated cache-clear error telemetry.
                 error_log('MaxtDesign RBP Cache Clear Error: ' . $e->getMessage());
             }
         }
@@ -873,16 +875,18 @@ class MaxtDesign_Role_Based_Pricing {
             
             // Log session clearing for debugging (only in WP_DEBUG mode)
             if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- WP_DEBUG-gated session-clear telemetry.
                 error_log(sprintf(
                     'MaxtDesign RBP: Cleared session after order #%d',
                     $order_id
                 ));
             }
-            
+
         } catch (Exception $e) {
             // CRITICAL: Never let session clearing break order processing
             // Silent failure - order completion must succeed
             if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- WP_DEBUG-gated session-clear error telemetry.
                 error_log('MaxtDesign RBP Session Clear Error: ' . $e->getMessage());
             }
         }

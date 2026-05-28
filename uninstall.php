@@ -46,6 +46,7 @@ function maxtdesign_rbp_uninstall() {
         
     } catch (Exception $e) {
         if (defined('WP_DEBUG') && WP_DEBUG) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- WP_DEBUG-gated uninstall error telemetry.
             error_log('MaxtDesign RBP Uninstall Error: ' . $e->getMessage());
         }
     }
