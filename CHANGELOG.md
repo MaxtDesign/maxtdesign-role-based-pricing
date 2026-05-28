@@ -1,0 +1,48 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on Keep a Changelog, and this project adheres to Semantic Versioning.
+
+## [Unreleased]
+
+## [1.1.1] - 2026-05-28
+
+### Added
+- WordPress 7.0 "Armstrong" compatibility (Tested up to: 7.0)
+- WooCommerce 10.8 compatibility (WC tested up to: 10.8)
+- Release tooling: `package.json`, `tools/prepare-svn.sh`, `tools/prepare-svn.ps1`, and this `CHANGELOG.md` (parity with `maxtdesign-cookie-consent`)
+
+### Changed
+- Raised WooCommerce minimum to 7.0 (was 5.0) — WC 5.x predates HPOS, and the plugin already declares HPOS compatibility
+- `get_popular_product_ids()` (cache warming) now uses `wc_get_orders()` instead of joining `wp_posts` to `wp_woocommerce_order_items`. The old query returned empty or incorrect results on HPOS stores; the rewrite works on both legacy and HPOS storage
+- README.md: stripped broken `docs/` link section (the folder never existed); point to the WordPress.org listing and support forum instead
+- readme.txt: System Requirements aligned with plugin header values (was "WordPress 5.0 / WooCommerce 5.0", now matches the actual 6.2 / 7.0 floor)
+
+### Fixed
+- `MaxtDesign_RBP_Core::drop_table()` passed table names through `wpdb::prepare("DROP TABLE IF EXISTS %s", ...)`. `%s` quotes identifiers as string literals, which is invalid SQL — `drop_table()` was silently no-op. Now interpolates the hardcoded class property directly
+- `MaxtDesign_RBP_Core::add_database_indexes()` had the same `%s`-for-identifier bug in two places, so index migration silently failed on every activation. Fixed; indexes now apply on upgrade
+- `MaxtDesign_RBP_Core::get_table_sizes()` had the same bug. Fixed
+- readme.txt Installation step pointed at the wrong slug (`woocommerce-role-based-pricing`); corrected to `maxtdesign-role-based-pricing`
+
+### Security
+- Transient-cleanup queries in the main plugin file now use `wpdb::esc_like()` + prepared statements instead of raw hardcoded LIKE patterns. No SQLi risk in the prior code (patterns were not user-derived) but the prepared form satisfies Plugin Check / VIPCS
+
+## [1.1.0] - 2026-05-XX
+
+### Added
+- **Set Price** — new discount type that sets an exact price regardless of the regular price
+- **Variation-level rules** — rules can target all variations of a variable product or a specific variation
+- Parent rule fallback: variations inherit parent product rules when no variation-specific rule exists
+
+### Changed
+- Discount type labels: "Amount Off" (subtract $X) and "Set Price" (exact price) for clearer admin UX
+
+## [1.0.0] - Initial release
+
+### Added
+- Global and product-specific pricing rules
+- Up to 3 custom user roles
+- Caching system with object-cache + transient fallback
+- WooCommerce HPOS compatibility declaration
+- Multisite support

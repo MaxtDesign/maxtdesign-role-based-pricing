@@ -1,6 +1,7 @@
-# Ignore all markdown files except README.md
+# Ignore all markdown files except README.md and CHANGELOG.md
 *.md
 !README.md
+!CHANGELOG.md
 
 # Ignore notes folder for critical and performance documentation
 notes/
@@ -59,6 +60,7 @@ assets/screenshot-*.png
 # Development documentation
 *.md
 !README.md
+!CHANGELOG.md
 !readme.txt
 
 # SVN and deployment files

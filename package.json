@@ -1,0 +1,13 @@
+{
+  "name": "maxtdesign-role-based-pricing",
+  "version": "1.1.1",
+  "description": "Release tooling for MaxtDesign Role-Based Pricing for WooCommerce. The plugin ships only PHP and unminified CSS — no JS or CSS build step is required.",
+  "private": true,
+  "scripts": {
+    "build": "echo \"No build step required for this plugin.\"",
+    "build:admin-css": "echo \"No CSS build step (assets/css/admin.css is shipped as-is).\"",
+    "build:admin-js": "echo \"No JS build step (admin scripts are inlined via wp_add_inline_script).\"",
+    "lint:php": "php -l maxtdesign-role-based-pricing.php && php -l uninstall.php && php -l includes/class-admin.php && php -l includes/class-core.php && php -l includes/class-frontend.php",
+    "prepare-svn": "node -e \"require('child_process').execSync(process.platform==='win32'?'powershell -NoProfile -ExecutionPolicy Bypass -File tools/prepare-svn.ps1 ' + (process.argv[1]||''):'bash tools/prepare-svn.sh ' + (process.argv[1]||''),{stdio:'inherit'})\""
+  }
+}
