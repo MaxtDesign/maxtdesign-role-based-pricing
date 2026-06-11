@@ -1,10 +1,10 @@
 === MaxtDesign Role-Based Pricing for WooCommerce ===
 Contributors: slaacr
-Donate link: https://maxtdesign.com/
+Donate link: https://github.com/sponsors/MaxtDesign
 Tags: woocommerce, pricing, wholesale, discounts, membership
 Requires at least: 6.2
 Tested up to: 7.0
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 Requires PHP: 7.4
 WC requires at least: 7.0
 WC tested up to: 10.8
@@ -131,6 +131,10 @@ Community support is available through the WordPress.org forums.
 5. **Cart Page** - Cart totals reflecting role-based discounts
 
 == Changelog ==
+
+= 1.1.3 =
+* Changed: plugin homepage (Plugin URI) now points to the official plugin page at maxtdesign.com/plugins/role-based-pricing
+* Changed: donate link standardized to github.com/sponsors/MaxtDesign
 
 = 1.1.2 =
 * Fixed: missing `translators:` comment on a `Variation #%d` placeholder string in the product meta box

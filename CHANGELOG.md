@@ -6,6 +6,12 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-06-11
+
+### Changed
+- Plugin URI now points to the official plugin page at `https://maxtdesign.com/plugins/role-based-pricing` (was the wordpress.org directory listing)
+- Donate link standardized to `https://github.com/sponsors/MaxtDesign` to match the other MaxtDesign plugins
+
 ## [1.1.2] - 2026-05-28
 
 ### Added

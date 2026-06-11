@@ -1,6 +1,6 @@
 # MaxtDesign Role-Based Pricing for WooCommerce
 
-> **Version:** 1.1.2  
+> **Version:** 1.1.3  
 > **Requires:** WordPress 6.2+, WooCommerce 7.0+, PHP 7.4+  
 > **Tested with:** WordPress 7.0, WooCommerce 10.8  
 > **License:** GPL v2 or later
@@ -184,7 +184,11 @@ Have an idea? Submit feature requests through:
 
 ## 📋 Changelog
 
-### 1.1.2 (Current)
+### 1.1.3 (Current)
+- Plugin URI now points to the official plugin page at maxtdesign.com/plugins/role-based-pricing
+- Donate link standardized to github.com/sponsors/MaxtDesign
+
+### 1.1.2
 - Plugin Check compliance pass — missing `translators:` comment, three unescaped admin echoes (`wp_kses_post()` wrap), and updated `phpcs:ignore` annotations on table-management queries
 - Added `.distignore` so the WordPress.org build pipeline excludes dev-only files from the user-installed zip
 
