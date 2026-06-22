@@ -43,6 +43,11 @@ require_once MAXTDESIGN_RBP_PLUGIN_DIR . 'includes/class-frontend.php';
 
 /**
  * Main WooCommerce Role-Based Pricing Class
+ *
+ * Suite integration: this plugin predates the MaxtDesign commerce-suite spine and
+ * is intentionally standalone — it does NOT bundle suite-core or register with
+ * MdSuite_Registry. Its absence from the suite status screen is by design, not a
+ * bug. Keep it self-contained so it ships and updates independently on wp.org.
  */
 class MaxtDesign_Role_Based_Pricing {
 
@@ -109,8 +114,9 @@ class MaxtDesign_Role_Based_Pricing {
         add_action('plugins_loaded', array($this, 'init'));
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
-        register_uninstall_hook(__FILE__, array('MaxtDesign_Role_Based_Pricing', 'uninstall'));
-        
+        // Uninstall cleanup is handled by uninstall.php (WordPress runs it
+        // automatically on delete); no register_uninstall_hook() needed.
+
         // Declare HPOS compatibility
         add_action('before_woocommerce_init', function() {
             if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
@@ -481,58 +487,72 @@ class MaxtDesign_Role_Based_Pricing {
      */
     private function format_variable_product_discounted_range($price_html, $product) {
         try {
+            // Early return if no discounts have been applied during this request
+            // (matches the simple-product path; skips the variation loop entirely)
+            if (!self::$user_has_discounts) {
+                return $price_html;
+            }
+
+            // Only compute discounted ranges on the single product page. Building
+            // get_available_variations() for every variable product in an archive
+            // grid would be an expensive N+1; archives keep the default range.
+            if (!function_exists('is_product') || !is_product()) {
+                return $price_html;
+            }
+
             // Only apply to logged-in users with pricing rules
             if (!is_user_logged_in()) {
                 return $price_html;
             }
-            
+
             $user_has_pricing_rules = $this->get_user_pricing_rules_status();
             if (!$user_has_pricing_rules) {
                 return $price_html;
             }
-            
-            // Get all available variations
+
+            // Get all available variations. WooCommerce has already computed each
+            // variation's display price here (running it through our price filter,
+            // which also populates self::$original_prices for discounted variations),
+            // so we read that data directly instead of re-loading every variation
+            // with wc_get_product() (N+1 fix).
             $variations = $product->get_available_variations();
             if (empty($variations)) {
                 return $price_html;
             }
-            
+
             $min_price = PHP_INT_MAX;
             $max_price = 0;
             $has_discounted_variations = false;
-            
+
             // Loop through variations to find min and max discounted prices
             foreach ($variations as $variation_data) {
+                if (empty($variation_data['variation_id']) || !isset($variation_data['display_price'])) {
+                    continue;
+                }
+
                 $variation_id = $variation_data['variation_id'];
-                $variation_product = wc_get_product($variation_id);
-                
-                if (!$variation_product || !$variation_product->exists()) {
+
+                // A variation is discounted only if get_role_based_price() recorded
+                // its pre-discount price in memory; presence here is the discount
+                // signal (no per-variation wc_get_product() reload required).
+                if (!isset(self::$original_prices[$variation_id])) {
                     continue;
                 }
-                
-                // Get the current price (which should already be discounted by get_role_based_price)
-                $current_price = $variation_product->get_price();
-                if (!$current_price || $current_price <= 0) {
+
+                // Use the display price WooCommerce already calculated (already discounted).
+                $discounted_price = (float) $variation_data['display_price'];
+                if ($discounted_price <= 0) {
                     continue;
                 }
-                
-                // Get the original price from our in-memory storage to check if discount was applied
-                $original_price = isset(self::$original_prices[$variation_id]) ? self::$original_prices[$variation_id] : $current_price;
-                
-                // Use the current price (already discounted) as the discounted price
-                $discounted_price = $current_price;
-                
-                // Only include variations that have discounts
-                if ($discounted_price && $discounted_price < $original_price) {
-                    $has_discounted_variations = true;
-                    
-                    // Update min and max prices
-                    if ($discounted_price < $min_price) {
-                        $min_price = $discounted_price;
-                    }
-                    if ($discounted_price > $max_price) {
-                        $max_price = $discounted_price;
-                    }
+
+                $has_discounted_variations = true;
+
+                // Update min and max prices
+                if ($discounted_price < $min_price) {
+                    $min_price = $discounted_price;
+                }
+                if ($discounted_price > $max_price) {
+                    $max_price = $discounted_price;
                 }
             }
             
@@ -959,77 +979,8 @@ class MaxtDesign_Role_Based_Pricing {
      * WooCommerce missing notice
      */
     public function woocommerce_missing_notice() {
-        echo '<div class="error"><p><strong>' . esc_html__('MaxtDesign Role-Based Pricing for WooCommerce', 'maxtdesign-role-based-pricing') . '</strong> ' . 
+        echo '<div class="error"><p><strong>' . esc_html__('MaxtDesign Role-Based Pricing for WooCommerce', 'maxtdesign-role-based-pricing') . '</strong> ' .
              esc_html__('requires WooCommerce to be installed and active.', 'maxtdesign-role-based-pricing') . '</p></div>';
-    }
-
-    /**
-     * Plugin uninstall - complete cleanup
-     */
-    public static function uninstall() {
-        // Check if user has permission to delete plugins
-        if (!current_user_can('delete_plugins')) {
-            return;
-        }
-
-        // Check if we're in the right context
-        if (!defined('WP_UNINSTALL_PLUGIN')) {
-            return;
-        }
-
-        // Include required classes
-        require_once MAXTDESIGN_RBP_PLUGIN_DIR . 'includes/class-core.php';
-        require_once MAXTDESIGN_RBP_PLUGIN_DIR . 'includes/class-admin.php';
-        require_once MAXTDESIGN_RBP_PLUGIN_DIR . 'includes/class-frontend.php';
-
-        // Initialize core and cleanup
-        $core = new MaxtDesign_RBP_Core();
-        
-        // Drop all plugin database tables
-        $core->drop_table();
-        
-        // Remove only custom roles created by this plugin (not WordPress built-in roles)
-        $core->remove_all_custom_roles();
-        
-        // Clear all plugin cache
-        $core->clear_all_cache();
-
-        // Delete all plugin options
-        $plugin_options = array(
-            'maxtdesign_rbp_version',
-            'maxtdesign_rbp_cache_duration',
-            'maxtdesign_rbp_display_original_price',
-            'maxtdesign_rbp_cache_method',
-            'maxtdesign_rbp_last_cache_clear',
-            'maxtdesign_rbp_cache_logs',
-            'maxtdesign_rbp_db_indexes_version',
-            'maxtdesign_rbp_db_logs',
-            'maxtdesign_rbp_query_logs',
-        );
-
-        foreach ($plugin_options as $option) {
-            delete_option($option);
-        }
-
-        // Clear all transients and cache entries
-        global $wpdb;
-        $like_transient   = $wpdb->esc_like('_transient_maxtdesign_rbp_') . '%';
-        $like_timeout     = $wpdb->esc_like('_transient_timeout_maxtdesign_rbp_') . '%';
-        $like_option      = $wpdb->esc_like('maxtdesign_rbp_') . '%';
-        $like_debug       = '%' . $wpdb->esc_like('maxtdesign_rbp_debug') . '%';
-
-        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like_transient));
-        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like_timeout));
-        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like_option));
-        // phpcs:enable
-
-        // Clear any cached data
-        wp_cache_flush();
-
-        // Remove any debug logs related to this plugin
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like_debug));
     }
 }
 

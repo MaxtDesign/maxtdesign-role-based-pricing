@@ -206,22 +206,23 @@ class MaxtDesign_RBP_Core {
         if (count($logs) > 20) {
             $logs = array_slice($logs, -20);
         }
-        
-        update_option('maxtdesign_rbp_db_logs', $logs);
+
+        // Non-autoloaded: diagnostic data must never load on every request.
+        update_option('maxtdesign_rbp_db_logs', $logs, false);
     }
 
     /**
      * Log query performance for monitoring and troubleshooting
      */
     private function log_query_performance($query_type, $sql, $execution_time, $result_count) {
-        // Only log slow queries or in debug mode
-        $slow_query_threshold = 0.1; // 100ms
-        $enable_logging = (defined('WP_DEBUG') && WP_DEBUG) || $execution_time > $slow_query_threshold;
-        
-        if (!$enable_logging) {
+        // Debug-only, matching log_database_event()/log_cache_event(). The old
+        // ">100ms" trigger wrote an autoloaded option on slow front-end page
+        // loads — exactly when the store is already struggling — so it is gone.
+        if (!defined('WP_DEBUG') || !WP_DEBUG) {
             return;
         }
-        
+
+        $slow_query_threshold = 0.1; // 100ms
         $log_data = array(
             'timestamp' => current_time('mysql'),
             'query_type' => $query_type,
@@ -230,18 +231,17 @@ class MaxtDesign_RBP_Core {
             'result_count' => $result_count,
             'is_slow' => $execution_time > $slow_query_threshold
         );
-        
+
         $logs = get_option('maxtdesign_rbp_query_logs', array());
         $logs[] = $log_data;
-        
+
         // Keep only last 50 log entries
         if (count($logs) > 50) {
             $logs = array_slice($logs, -50);
         }
-        
-        update_option('maxtdesign_rbp_query_logs', $logs);
-        
-        // Slow queries are logged to performance monitoring system
+
+        // Non-autoloaded: diagnostic data must never load on every request.
+        update_option('maxtdesign_rbp_query_logs', $logs, false);
     }
 
     /**
@@ -946,8 +946,9 @@ class MaxtDesign_RBP_Core {
         if (count($logs) > 50) {
             $logs = array_slice($logs, -50);
         }
-        
-        update_option('maxtdesign_rbp_cache_logs', $logs);
+
+        // Non-autoloaded: diagnostic data must never load on every request.
+        update_option('maxtdesign_rbp_cache_logs', $logs, false);
     }
 
     /**
@@ -1539,14 +1540,14 @@ class MaxtDesign_RBP_Core {
         $db_logs = get_option('maxtdesign_rbp_db_logs', array());
         if (count($db_logs) > 50) {
             $db_logs = array_slice($db_logs, -50);
-            update_option('maxtdesign_rbp_db_logs', $db_logs);
+            update_option('maxtdesign_rbp_db_logs', $db_logs, false);
         }
-        
+
         // Clean up old cache logs (keep only last 50 entries)
         $cache_logs = get_option('maxtdesign_rbp_cache_logs', array());
         if (count($cache_logs) > 50) {
             $cache_logs = array_slice($cache_logs, -50);
-            update_option('maxtdesign_rbp_cache_logs', $cache_logs);
+            update_option('maxtdesign_rbp_cache_logs', $cache_logs, false);
         }
         
         // Clean up expired performance monitoring transients

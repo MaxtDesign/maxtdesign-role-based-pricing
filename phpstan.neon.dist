@@ -1,0 +1,15 @@
+includes:
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon
+    - phpstan-baseline.neon
+parameters:
+    level: 5
+    paths:
+        - maxtdesign-role-based-pricing.php
+        - includes
+    bootstrapFiles:
+        - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
+        - tests/phpstan-constants.php
+    # Legacy plugin: WP/WC stub PHPDocs trigger false "always true/false"
+    # notes on defensive guards we intentionally keep. Don't treat stub
+    # PHPDoc types as certain.
+    treatPhpDocTypesAsCertain: false

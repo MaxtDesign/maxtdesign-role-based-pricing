@@ -22,6 +22,11 @@ wp-content/cache/supercache/
 .DS_Store
 Thumbs.db
 *.log
+
+# Composer / test tooling (dev only; never shipped)
+/vendor/
+composer.lock
+.phpunit.result.cache
 *.tmp
 *.temp
 node_modules/

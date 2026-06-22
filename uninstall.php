@@ -86,6 +86,7 @@ function maxtdesign_rbp_delete_options() {
         'maxtdesign_rbp_query_logs',
         'maxtdesign_rbp_cache_logs',
         'maxtdesign_rbp_db_indexes_version',
+        'maxtdesign_rbp_last_performance_cleanup',
     );
     
     foreach ($options as $option) {

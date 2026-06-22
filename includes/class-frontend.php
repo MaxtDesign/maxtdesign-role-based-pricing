@@ -34,6 +34,13 @@ class MaxtDesign_RBP_Frontend {
     }
 
     private function should_enqueue_styles() {
+        // Guests never see role-based discounted markup, so they never need the
+        // stylesheet. Gating on login state keeps the front end zero-footprint
+        // for logged-out visitors (the vast majority of shop traffic).
+        if (!is_user_logged_in()) {
+            return false;
+        }
+
         return is_woocommerce() || is_cart() || is_checkout() || is_shop() || is_product_category() || is_product_tag() || is_product() || is_page('shop') || is_page('cart') || is_page('checkout');
     }
 

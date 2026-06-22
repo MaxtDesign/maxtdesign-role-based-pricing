@@ -1,0 +1,19 @@
+{
+    "name": "maxtdesign/role-based-pricing-dev",
+    "description": "Developer tooling (PHPUnit + PHPStan) for MaxtDesign Role-Based Pricing for WooCommerce. Not shipped to WordPress.org.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=7.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6",
+        "phpstan/phpstan": "^1.12",
+        "szepeviktor/phpstan-wordpress": "^1.3",
+        "php-stubs/woocommerce-stubs": "^9.4"
+    },
+    "scripts": {
+        "test": "phpunit",
+        "analyze": "phpstan analyse"
+    }
+}

@@ -115,7 +115,7 @@ class MaxtDesign_RBP_Admin {
                 $applies_to_cell = $is_variable ? '<td>' . esc_html($rule['product_id'] == $product_id ? __('All variations', 'maxtdesign-role-based-pricing') : ($variations_data[$rule['product_id']] ?? '#' . $rule['product_id'])) . '</td>' : '';
                 echo '<tr><td>' . esc_html($role_display_name) . '</td>' . wp_kses_post($applies_to_cell) . '<td>' . esc_html($discount_type_display) . '</td><td>' . wp_kses_post($discount_value_display) . '</td><td>';
                 echo '<button type="button" class="button button-small maxtdesign-rbp-edit-product-rule" data-rule-id="' . esc_attr($rule['id']) . '" data-role-name="' . esc_attr($rule['role_name']) . '" data-discount-type="' . esc_attr($rule['discount_type']) . '" data-discount-value="' . esc_attr($rule['discount_value']) . '">' . esc_html__('Edit', 'maxtdesign-role-based-pricing') . '</button> ';
-                echo '<a href="#" class="button button-small maxtdesign-rbp-delete-rule" data-rule-id="' . esc_attr($rule['id']) . '">' . esc_html__('Delete', 'maxtdesign-role-based-pricing') . '</a>';
+                echo '<button type="button" class="button button-small maxtdesign-rbp-delete-rule" data-rule-id="' . esc_attr($rule['id']) . '">' . esc_html__('Delete', 'maxtdesign-role-based-pricing') . '</button>';
                 echo '</td></tr>';
             }
             echo '</tbody></table><br>';
@@ -651,6 +651,9 @@ class MaxtDesign_RBP_Admin {
     private function enqueue_settings_page_scripts() {
         $inline_js = "
             jQuery(document).ready(function(\$) {
+                // a11y: element to return focus to when the edit modal closes.
+                var maxtdesignRbpModalReturnFocus = null;
+
                 // Global rule form submission
                 $('#maxtdesign-rbp-global-rule-form').on('submit', function(e) {
                     e.preventDefault();
@@ -757,20 +760,39 @@ class MaxtDesign_RBP_Admin {
                     $('#edit_role_name').val(roleName);
                     $('#edit_discount_type').val(discountType);
                     $('#edit_discount_value').val(discountValue);
-                    
-                    // Show modal
+
+                    // a11y: remember the trigger so focus can return on close, then
+                    // show the dialog and move focus to the first editable control.
+                    maxtdesignRbpModalReturnFocus = this;
                     $('#maxtdesign-rbp-edit-modal').show();
+                    $('#edit_discount_type').trigger('focus');
                 });
-                
+
+                // a11y: single close path that restores focus to the trigger.
+                function maxtdesignRbpCloseModal() {
+                    $('#maxtdesign-rbp-edit-modal').hide();
+                    if (maxtdesignRbpModalReturnFocus && typeof maxtdesignRbpModalReturnFocus.focus === 'function') {
+                        maxtdesignRbpModalReturnFocus.focus();
+                    }
+                    maxtdesignRbpModalReturnFocus = null;
+                }
+
                 // Close modal when clicking X or Cancel
                 $('.maxtdesign-rbp-modal-close, #maxtdesign-rbp-cancel-edit').on('click', function() {
-                    $('#maxtdesign-rbp-edit-modal').hide();
+                    maxtdesignRbpCloseModal();
                 });
-                
+
                 // Close modal when clicking outside
                 $(window).on('click', function(e) {
                     if (e.target.id === 'maxtdesign-rbp-edit-modal') {
-                        $('#maxtdesign-rbp-edit-modal').hide();
+                        maxtdesignRbpCloseModal();
+                    }
+                });
+
+                // Close modal on Escape key
+                $(document).on('keydown', function(e) {
+                    if ((e.key === 'Escape' || e.keyCode === 27) && $('#maxtdesign-rbp-edit-modal').is(':visible')) {
+                        maxtdesignRbpCloseModal();
                     }
                 });
                 
@@ -1177,11 +1199,11 @@ class MaxtDesign_RBP_Admin {
      */
     private function render_edit_modal() {
         ?>
-        <div id="maxtdesign-rbp-edit-modal" class="maxtdesign-rbp-modal" style="display: none;">
+        <div id="maxtdesign-rbp-edit-modal" class="maxtdesign-rbp-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="maxtdesign-rbp-edit-modal-title">
             <div class="maxtdesign-rbp-modal-content">
                 <div class="maxtdesign-rbp-modal-header">
-                    <h3><?php esc_html_e('Edit Global Pricing Rule', 'maxtdesign-role-based-pricing'); ?></h3>
-                    <span class="maxtdesign-rbp-modal-close">&times;</span>
+                    <h3 id="maxtdesign-rbp-edit-modal-title"><?php esc_html_e('Edit Global Pricing Rule', 'maxtdesign-role-based-pricing'); ?></h3>
+                    <button type="button" class="maxtdesign-rbp-modal-close" aria-label="<?php esc_attr_e('Close', 'maxtdesign-role-based-pricing'); ?>">&times;</button>
                 </div>
                 <div class="maxtdesign-rbp-modal-body">
                     <form id="maxtdesign-rbp-edit-form">

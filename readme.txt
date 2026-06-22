@@ -112,7 +112,7 @@ Yes, it's designed for maximum compatibility using standard WooCommerce hooks an
 
 = Can I customize the member price color? =
 
-Yes! By default, member prices use your theme's color. To customize, go to Appearance > Customize > Additional CSS and add: `.maxtdesign-rbp-price .maxtdesign-rbp-member { color: #your-color !important; }`. See CUSTOMIZATION-GUIDE.md for examples.
+Yes! By default, member prices use your theme's color. To customize, go to Appearance > Customize > Additional CSS and add: `.maxtdesign-rbp-price .maxtdesign-rbp-member { color: #007cba !important; }` (replace `#007cba` with any color you like).
 
 = How does it compare to subscription-based pricing plugins? =
 

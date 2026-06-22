@@ -45,8 +45,12 @@ docs
 tests
 phpunit.xml
 phpunit.xml.dist
+.phpunit.result.cache
 phpcs.xml
 phpcs.xml.dist
+phpstan.neon
+phpstan.neon.dist
+phpstan-baseline.neon
 composer.json
 composer.lock
 vendor

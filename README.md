@@ -180,6 +180,10 @@ Have an idea? Submit feature requests through:
 - Minimal database writes (cache and rules only)
 - Compatible with page caching and CDNs
 
+### Suite Integration
+
+This plugin is **intentionally standalone**. It predates the MaxtDesign commerce-suite spine and does **not** bundle `suite-core` or register with `MdSuite_Registry`, so it ships and updates independently on WordPress.org. Its absence from any suite status screen is by design, not a defect.
+
 ---
 
 ## 📋 Changelog
