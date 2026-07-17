@@ -4,7 +4,7 @@ Donate link: https://github.com/sponsors/MaxtDesign
 Tags: woocommerce, pricing, wholesale, discounts, membership
 Requires at least: 6.2
 Tested up to: 7.0
-Stable tag: 1.1.3
+Stable tag: 1.1.4
 Requires PHP: 7.4
 WC requires at least: 7.0
 WC tested up to: 10.8
@@ -131,6 +131,9 @@ Community support is available through the WordPress.org forums.
 5. **Cart Page** - Cart totals reflecting role-based discounts
 
 == Changelog ==
+
+= 1.1.4 =
+* Fixed: product edit screen and role admin could exhaust PHP memory (fatal error) on stores with a large customer base. `get_all_roles()` and `delete_custom_role()` counted users per role with `get_users(['role'=>x])`, loading every matching user object into memory; both now use `count_users()` aggregate tallies. No behavior change other than not crashing.
 
 = 1.1.3 =
 * Changed: plugin homepage (Plugin URI) now points to the official plugin page at maxtdesign.com/plugins/role-based-pricing

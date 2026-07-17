@@ -1193,10 +1193,15 @@ class MaxtDesign_RBP_Core {
         if (!get_role($role_name)) {
             return new WP_Error('role_not_found', __('Role does not exist.', 'maxtdesign-role-based-pricing'));
         }
-        $users_with_role = get_users(array('role' => $role_name));
-        if (!empty($users_with_role)) {
+        // Count users in this role without loading every user object into memory.
+        // get_users(['role'=>x]) materializes all matching WP_User objects, which
+        // exhausts memory on stores with large customer bases; count_users() returns
+        // per-role tallies from a single aggregate query.
+        $role_user_counts = count_users();
+        $user_count       = isset($role_user_counts['avail_roles'][$role_name]) ? (int) $role_user_counts['avail_roles'][$role_name] : 0;
+        if ($user_count > 0) {
             /* translators: %d is the number of users assigned to the role */
-            return new WP_Error('role_has_users', sprintf(__('Cannot delete role. %d users are assigned to this role.', 'maxtdesign-role-based-pricing'), count($users_with_role)));
+            return new WP_Error('role_has_users', sprintf(__('Cannot delete role. %d users are assigned to this role.', 'maxtdesign-role-based-pricing'), $user_count));
         }
         remove_role($role_name);
         // Verify the role was actually deleted
@@ -1210,11 +1215,17 @@ class MaxtDesign_RBP_Core {
         global $wp_roles;
         $all_roles = array();
         $roles = $wp_roles->get_names();
+        // Fetch every role's user tally in one aggregate query. Calling
+        // get_users(['role'=>x]) per role loaded all matching WP_User objects into
+        // memory and exhausted 512MB on stores with large customer bases (e.g. the
+        // product-edit meta box, which calls this on every load).
+        $role_user_counts = count_users();
+        $avail_roles      = isset($role_user_counts['avail_roles']) ? $role_user_counts['avail_roles'] : array();
         foreach ($roles as $role_name => $display_name) {
             $role_obj = get_role($role_name);
             // Recognize both new (maxtdesign_rbp_) and old (maxt_rbp_) prefixes as custom roles
             $is_custom = strpos($role_name, $this->role_prefix) === 0 || strpos($role_name, 'maxt_rbp_') === 0;
-            $user_count = count(get_users(array('role' => $role_name)));
+            $user_count = isset($avail_roles[$role_name]) ? (int) $avail_roles[$role_name] : 0;
             $all_roles[$role_name] = array(
                 'name' => $role_name,
                 'display_name' => $display_name,

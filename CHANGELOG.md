@@ -6,6 +6,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-07-11
+
+### Fixed
+- Product edit screen and the role admin could exhaust PHP memory (`Allowed memory size ... exhausted`, a fatal white-screen) on stores with a large customer base. `get_all_roles()` (rendered on every product-edit meta box load) and `delete_custom_role()` counted users per role via `get_users(['role' => $role])`, which materializes every matching `WP_User` object in memory — on a store with ~18k users this loaded ~17.9k customer objects per call. Both now read per-role tallies from `count_users()` (a single aggregate query). No functional change other than not crashing.
+
 ## [1.1.3] - 2026-06-11
 
 ### Changed
