@@ -53,8 +53,8 @@ yarn-error.log
 svn-upload/
 .svnignore
 
-# Development and documentation files
-docs/
+# Development and documentation files (docs/* not docs/ so STATE.md can be re-included below)
+docs/*
 PROJECT_CONTEXT.md
 
 # WordPress Plugin Directory assets (these should be in svn-upload only)
@@ -70,3 +70,5 @@ assets/screenshot-*.png
 
 # SVN and deployment files
 SVN_UPLOAD_INSTRUCTIONS.md
+# Project living state (tracking-notes-standard.md) — tracked despite *.md and docs/* ignores
+!docs/STATE.md
