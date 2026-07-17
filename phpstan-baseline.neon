@@ -6,17 +6,17 @@ parameters:
 			path: includes/class-admin.php
 
 		-
-			message: "#^If condition is always false\\.$#"
+			message: "#^Negated boolean expression is always true\\.$#"
 			count: 1
 			path: includes/class-admin.php
 
 		-
-			message: "#^Right side of && is always false\\.$#"
-			count: 3
+			message: "#^Result of \\|\\| is always true\\.$#"
+			count: 1
 			path: includes/class-admin.php
 
 		-
-			message: "#^Variable \\$role_options in empty\\(\\) always exists and is not falsy\\.$#"
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
 			count: 1
 			path: includes/class-admin.php
 

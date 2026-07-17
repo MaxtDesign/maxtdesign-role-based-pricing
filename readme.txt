@@ -4,7 +4,7 @@ Donate link: https://github.com/sponsors/MaxtDesign
 Tags: woocommerce, pricing, wholesale, discounts, membership
 Requires at least: 6.2
 Tested up to: 7.0
-Stable tag: 1.1.4
+Stable tag: 1.2.0
 Requires PHP: 7.4
 WC requires at least: 7.0
 WC tested up to: 10.8
@@ -132,6 +132,14 @@ Community support is available through the WordPress.org forums.
 
 == Changelog ==
 
+= 1.2.0 =
+* **New admin home** - the settings screen moved to a cleaner, faster page. When the MaxtDesign suite is installed it appears under the MaxtDesign menu; otherwise it stays under WooCommerce. Old bookmarks redirect automatically.
+* **No more pop-up dialogs** - editing global rules now uses a normal prefilled form instead of the pop-up modal, and product-rule edits are inline fields instead of browser prompt() dialogs
+* **Product rules save with the product** - the Role-Based Pricing box on the product editor now applies its changes when you click Update, like every other product field
+* Security/robustness: every admin action now posts through admin-post.php with a nonce and capability check and redirects cleanly (no AJAX layer, no jQuery, no inline scripts) — this also makes the admin fully compatible with strict Content-Security-Policy setups
+* Accessibility: status words render as high-contrast badges, tables are keyboard-scrollable regions, and every empty list explains what to do next
+* Settings link added to the Plugins screen row
+
 = 1.1.4 =
 * Fixed: product edit screen and role admin could exhaust PHP memory (fatal error) on stores with a large customer base. `get_all_roles()` and `delete_custom_role()` counted users per role with `get_users(['role'=>x])`, loading every matching user object into memory; both now use `count_users()` aggregate tallies. No behavior change other than not crashing.
 
@@ -171,6 +179,9 @@ Community support is available through the WordPress.org forums.
 * Zero external dependencies
 
 == Upgrade Notice ==
+
+= 1.2.0 =
+Redesigned admin screen (new location under WooCommerce or the MaxtDesign suite menu — old links redirect), inline editing instead of pop-ups, CSP-friendly (no inline scripts), plus the 1.1.4 memory-exhaustion fix for large stores.
 
 = 1.1.2 =
 Plugin Check compliance pass: missing translators comment, three unescaped admin echoes, and lint-suppression cleanup. No behaviour changes.

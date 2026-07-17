@@ -6,6 +6,29 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-17
+
+Suite nav + admin-UI conformance migration (per the 2026-07-17 `suite-admin-navigation-handoff.md` and `suite-admin-ui-system-handoff.md`, RBP row in each).
+
+### Added
+- Suite mounting (Tier-2 / opportunistic): the admin screen registers as `md-rbp` under the MaxtDesign menu when suite-core is active (`class_exists('MdSuite_Admin')`, checked only from hooks), with `MdSuite_Admin::register_screen()` + `MdSuite_Registry::register()` (all guarded). Fallback stays the WooCommerce submenu. The plugin still never vendors suite-core.
+- Permanent redirect shim from the legacy `maxtdesign-role-pricing` slug (args preserved).
+- Plugins-screen Settings action link.
+- `?tab=` dispatch scaffold with `maxtdesign_rbp_admin_tabs` filter + `maxtdesign_rbp_render_tab_{slug}` action — Pro add-ons inject tabs instead of menu entries.
+- Suite UI component shapes throughout: page-header lockup, cards, status badges (Active/Inactive/Overridden/Custom/Built-in/index states), `.md-suite-table-region` keyboard-scrollable table wrappers, designed empty states. Byte-identical fallback markup + `method_exists()` guards on every suite helper call.
+- Destructive buttons carry the `data-md-suite-confirm` styled-dialog contract (dialog appears when suite JS is present; server-side nonce+cap guards are the real protection).
+
+### Changed
+- **All admin mutations converted from AJAX to admin-post.php PRG** with nonce + capability checks and dictionary-based flash-notice query codes. The 18 `wp_ajax_*` handlers, both inline-jQuery script blocks (~500 lines), the edit modal, and all native `confirm()`/`prompt()` dialogs are gone. The admin now ships zero JavaScript, making it CSP-clean.
+- Global-rule editing is a prefilled inline form (`?edit_global_rule=ID`) instead of a jQuery modal.
+- Product metabox rules are edited as fields inside the product form and persisted on `save_post_product` (delete via checkbox, values inline, add-new via the standard WooCommerce field helpers) — the metabox-native PRG equivalent. Changes apply when the product is updated.
+- `assets/css/admin.css` rewritten as the Tier-2 fallback sheet (~3.5KB, was 8.5KB): styles the shared `md-suite-*` class shapes with WP-native semantic colors; enqueued only when suite-core is absent (suite stylesheet takes over otherwise). No brand purple in the wp.org build, per the Tier-2 contract.
+- Activation-notice settings link points at the new `md-rbp` slug.
+- Main-class docblock updated: the retired "predates the spine" carve-out replaced with the Tier-2 opportunistic-mounting contract.
+
+### Removed
+- All 18 `wp_ajax_maxtdesign_rbp_*` handlers, `wp_enqueue_script('jquery')`, `wp_add_inline_script()` blocks, the modal renderer, and the render-time GET-action handlers on the settings page.
+
 ## [1.1.4] - 2026-07-11
 
 ### Fixed

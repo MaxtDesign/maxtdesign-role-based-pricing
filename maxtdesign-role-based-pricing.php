@@ -3,7 +3,7 @@
  * Plugin Name: MaxtDesign Role-Based Pricing for WooCommerce
  * Plugin URI: https://maxtdesign.com/plugins/role-based-pricing
  * Description: Professional role-based pricing for WooCommerce. Set different prices for different user roles with percentage or fixed discounts.
- * Version: 1.1.4
+ * Version: 1.2.0
  * Author: MaxtDesign
  * Author URI: https://maxtdesign.com
  * Text Domain: maxtdesign-role-based-pricing
@@ -25,7 +25,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('MAXTDESIGN_RBP_VERSION', '1.1.4');
+define('MAXTDESIGN_RBP_VERSION', '1.2.0');
 define('MAXTDESIGN_RBP_PLUGIN_FILE', __FILE__);
 define('MAXTDESIGN_RBP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('MAXTDESIGN_RBP_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -44,10 +44,12 @@ require_once MAXTDESIGN_RBP_PLUGIN_DIR . 'includes/class-frontend.php';
 /**
  * Main WooCommerce Role-Based Pricing Class
  *
- * Suite integration: this plugin predates the MaxtDesign commerce-suite spine and
- * is intentionally standalone — it does NOT bundle suite-core or register with
- * MdSuite_Registry. Its absence from the suite status screen is by design, not a
- * bug. Keep it self-contained so it ships and updates independently on wp.org.
+ * Suite integration: Tier-2 / opportunistic (2026-07-17 nav handoff). This
+ * wp.org plugin never vendors suite-core; when suite-core is active on the
+ * site, the admin screen mounts under the MaxtDesign menu and registers with
+ * MdSuite_Registry (all class_exists-guarded, checked only from hooks). On a
+ * site without the suite it stays a self-contained WooCommerce submenu, so a
+ * lone install never grows a MaxtDesign top-level menu.
  */
 class MaxtDesign_Role_Based_Pricing {
 
@@ -951,7 +953,7 @@ class MaxtDesign_Role_Based_Pricing {
             echo '<p>' . sprintf(
                 /* translators: %s is the link to the plugin settings page */
                 esc_html__('Go to %s to create custom roles and set up pricing rules.', 'maxtdesign-role-based-pricing'),
-                '<a href="' . esc_url(admin_url('admin.php?page=maxtdesign-role-pricing')) . '">' . esc_html__('WooCommerce > Role-Based Pricing', 'maxtdesign-role-based-pricing') . '</a>'
+                '<a href="' . esc_url(admin_url('admin.php?page=md-rbp')) . '">' . esc_html__('Role-Based Pricing settings', 'maxtdesign-role-based-pricing') . '</a>'
             ) . '</p>';
             echo '</div>';
             delete_transient('maxtdesign_rbp_activation_notice');

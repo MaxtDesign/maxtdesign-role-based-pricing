@@ -1,6 +1,6 @@
 # MaxtDesign Role-Based Pricing for WooCommerce
 
-> **Version:** 1.1.3  
+> **Version:** 1.2.0  
 > **Requires:** WordPress 6.2+, WooCommerce 7.0+, PHP 7.4+  
 > **Tested with:** WordPress 7.0, WooCommerce 10.8  
 > **License:** GPL v2 or later
@@ -182,13 +182,23 @@ Have an idea? Submit feature requests through:
 
 ### Suite Integration
 
-This plugin is **intentionally standalone**. It predates the MaxtDesign commerce-suite spine and does **not** bundle `suite-core` or register with `MdSuite_Registry`, so it ships and updates independently on WordPress.org. Its absence from any suite status screen is by design, not a defect.
+This plugin ships and updates independently on WordPress.org and does **not** bundle `suite-core`. When the MaxtDesign suite is installed on the same site, the settings screen automatically mounts under the **MaxtDesign** admin menu and registers with the suite overview; on any other site it stays a normal WooCommerce submenu (opportunistic mounting — a lone install never grows a MaxtDesign top-level menu).
 
 ---
 
 ## 📋 Changelog
 
-### 1.1.3 (Current)
+### 1.2.0 (Current)
+- Suite nav + admin-UI conformance: settings screen is now `md-rbp`, mounting under the MaxtDesign menu when suite-core is active (opportunistic; never vendored), WooCommerce submenu otherwise; old slug redirects forever
+- All admin mutations converted from AJAX/jQuery to admin-post.php PRG with nonce + capability checks; zero admin JavaScript (CSP-clean)
+- Global-rule editing via prefilled inline form (modal removed); product metabox rules edit inline and save with the product (`prompt()` dialogs removed)
+- Suite UI component shapes (cards, status badges, table regions, empty states) with a ~3.5KB Tier-2 fallback stylesheet (was 8.5KB)
+- Plugins-screen Settings link; `maxtdesign_rbp_admin_tabs` filter for Pro tab injection
+
+### 1.1.4
+- Fixed: role admin and product-edit meta box could exhaust PHP memory on stores with large customer bases (`get_users(['role'=>x])` → `count_users()` aggregate tallies)
+
+### 1.1.3
 - Plugin URI now points to the official plugin page at maxtdesign.com/plugins/role-based-pricing
 - Donate link standardized to github.com/sponsors/MaxtDesign
 

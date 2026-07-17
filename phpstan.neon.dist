@@ -9,6 +9,7 @@ parameters:
     bootstrapFiles:
         - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
         - tests/phpstan-constants.php
+        - stubs/md-suite-stubs.php
     # Legacy plugin: WP/WC stub PHPDocs trigger false "always true/false"
     # notes on defensive guards we intentionally keep. Don't treat stub
     # PHPDoc types as certain.

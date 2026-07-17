@@ -1,422 +1,151 @@
 /**
- * Admin styles for Role-Based Pricing for WooCommerce Cache Management
+ * Admin styles for MaxtDesign Role-Based Pricing — Tier-2 fallback sheet.
+ *
+ * Loaded ONLY when suite-core is absent. It styles the shared suite class
+ * shapes (md-suite-*) with WP-native semantic colors so a lone wp.org
+ * install looks native; when suite-core is active, its registered-screen
+ * stylesheet takes over and this file is not enqueued. No brand purple
+ * here by contract (UI handoff §7.1 Tier-2).
  *
  * @package MaxtDesign_RBP
  */
 
-/* Cache Management Section */
-.maxtdesign-rbp-cache-status {
-    background: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 15px;
-    margin-bottom: 20px;
+/* Page header lockup */
+.md-suite-page-header {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0 8px;
 }
 
-.maxtdesign-rbp-cache-status h3 {
-    margin-top: 0;
-    color: #23282d;
+.md-suite-page-header__brand {
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: #1d2327;
 }
 
-.maxtdesign-rbp-cache-status table {
-    margin: 0;
-    background: transparent;
+.md-suite-page-header__sep {
+    color: #8c8f94;
 }
 
-.maxtdesign-rbp-cache-status table td {
-    padding: 8px 12px;
-    border-bottom: 1px solid #e1e1e1;
-}
-
-.maxtdesign-rbp-cache-status table td:first-child {
-    width: 200px;
-    font-weight: 600;
-}
-
-/* Cache Actions */
-.maxtdesign-rbp-cache-actions {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 15px;
-    margin-bottom: 20px;
-}
-
-.maxtdesign-rbp-cache-actions h3 {
-    margin-top: 0;
-    color: #23282d;
-}
-
-.maxtdesign-rbp-cache-actions p {
-    margin-bottom: 15px;
-}
-
-.maxtdesign-rbp-cache-actions button {
-    margin-right: 10px;
-    margin-bottom: 5px;
-}
-
-/* Selective Cache Clearing */
-.maxtdesign-rbp-selective-cache {
-    background: #f0f8ff;
-    border: 1px solid #b3d9ff;
-    border-radius: 4px;
-    padding: 15px;
-    margin-top: 15px;
-}
-
-.maxtdesign-rbp-selective-cache h4 {
-    margin-top: 0;
-    color: #0073aa;
-}
-
-.maxtdesign-rbp-selective-cache p {
-    margin-bottom: 10px;
-}
-
-.maxtdesign-rbp-selective-cache label {
-    font-weight: 600;
-    margin-right: 10px;
-}
-
-.maxtdesign-rbp-selective-cache select,
-.maxtdesign-rbp-selective-cache input[type="number"] {
-    margin-right: 10px;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-}
-
-/* Cache Logs */
-.maxtdesign-rbp-cache-logs {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 15px;
-    margin-top: 20px;
-}
-
-.maxtdesign-rbp-cache-logs h3 {
-    margin-top: 0;
-    color: #23282d;
-}
-
-.maxtdesign-rbp-cache-logs table {
-    margin: 0;
-    font-size: 13px;
-}
-
-.maxtdesign-rbp-cache-logs table th {
-    background: #f1f1f1;
-    font-weight: 600;
-    padding: 8px;
-}
-
-.maxtdesign-rbp-cache-logs table td {
-    padding: 6px 8px;
-    border-bottom: 1px solid #e1e1e1;
-}
-
-/* Status Indicators */
-.maxtdesign-rbp-status-indicator {
+.md-suite-page-header__title {
     display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    margin-right: 5px;
+    margin: 0;
+    padding: 0;
+    font-size: 23px;
+    font-weight: 400;
+    line-height: 1.3;
 }
 
-.maxtdesign-rbp-status-indicator.healthy {
-    background-color: #46b450;
+.md-suite-page-header__meta {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.maxtdesign-rbp-status-indicator.warning {
-    background-color: #ffb900;
-}
-
-.maxtdesign-rbp-status-indicator.error {
-    background-color: #dc3232;
-}
-
-/* Button States */
-.maxtdesign-rbp-cache-actions button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .maxtdesign-rbp-cache-actions button {
-        display: block;
-        width: 100%;
-        margin-bottom: 10px;
-        margin-right: 0;
-    }
-
-    .maxtdesign-rbp-selective-cache select,
-    .maxtdesign-rbp-selective-cache input[type="number"] {
-        display: block;
-        width: 100%;
-        margin-bottom: 10px;
-        margin-right: 0;
-    }
-
-    .maxtdesign-rbp-selective-cache label {
-        display: block;
-        margin-bottom: 5px;
-        margin-right: 0;
-    }
-}
-
-/* Notice Styles */
-.maxtdesign-rbp-notice {
-    margin: 15px 0;
-    padding: 12px;
-    border-left: 4px solid;
-    border-radius: 0 4px 4px 0;
-}
-
-.maxtdesign-rbp-notice.success {
-    background-color: #d4edda;
-    border-left-color: #46b450;
-    color: #155724;
-}
-
-.maxtdesign-rbp-notice.error {
-    background-color: #f8d7da;
-    border-left-color: #dc3232;
-    color: #721c24;
-}
-
-.maxtdesign-rbp-notice.warning {
-    background-color: #fff3cd;
-    border-left-color: #ffb900;
-    color: #856404;
-}
-
-.maxtdesign-rbp-notice.info {
-    background-color: #d1ecf1;
-    border-left-color: #0073aa;
-    color: #0c5460;
-}
-
-/* Loading States */
-.maxtdesign-rbp-loading {
-    position: relative;
-    overflow: hidden;
-}
-
-.maxtdesign-rbp-loading::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    animation: loading 1.5s infinite;
-}
-
-@keyframes loading {
-    0% {
-        left: -100%;
-    }
-
-    100% {
-        left: 100%;
-    }
-}
-
-/* Tooltip Styles */
-.maxtdesign-rbp-tooltip {
-    position: relative;
-    cursor: help;
-}
-
-.maxtdesign-rbp-tooltip::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 125%;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #333;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s;
-    z-index: 1000;
-}
-
-.maxtdesign-rbp-tooltip:hover::after {
-    opacity: 1;
-    visibility: visible;
-}
-
-/* Settings Section Styling */
-.maxtdesign-rbp-settings-section {
+/* Cards — the only sanctioned panel */
+.md-suite-card {
     background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 20px;
-    margin-bottom: 20px;
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 0 0 16px;
+    box-shadow: 0 1px 0 rgba(10, 10, 10, .04);
 }
 
-.maxtdesign-rbp-settings-section h2 {
-    margin-top: 0;
-    color: #23282d;
-    border-bottom: 2px solid #0073aa;
-    padding-bottom: 10px;
-}
-
-/* Form Enhancements */
-.maxtdesign-rbp-form-group {
-    margin-bottom: 15px;
-}
-
-.maxtdesign-rbp-form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
-}
-
-.maxtdesign-rbp-form-group input,
-.maxtdesign-rbp-form-group select {
-    width: 100%;
-    max-width: 300px;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.maxtdesign-rbp-form-group .description {
+.md-suite-card__title {
+    margin: 0 0 12px;
     font-size: 13px;
-    color: #666;
-    margin-top: 5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #646970;
 }
 
-/* Modal Styles */
-.maxtdesign-rbp-modal {
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+.md-suite-card__body > :last-child {
+    margin-bottom: 0;
 }
 
-.maxtdesign-rbp-modal-content {
-    background-color: #fff;
-    margin: 5% auto;
-    padding: 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    width: 90%;
-    max-width: 500px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+/* Status badges — every operator-visible state word */
+.md-suite-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid #c3c4c7;
+    background: #f6f7f9;
+    color: #1d2327;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.6;
+    white-space: nowrap;
 }
 
-.maxtdesign-rbp-modal-header {
-    background: #f1f1f1;
-    padding: 15px 20px;
-    border-bottom: 1px solid #ddd;
-    border-radius: 4px 4px 0 0;
-    position: relative;
+.md-suite-badge--good {
+    border-color: #9ec2a1;
+    background: #edfaef;
+    color: #007017;
 }
 
-.maxtdesign-rbp-modal-header h3 {
+.md-suite-badge--warn {
+    border-color: #e5c078;
+    background: #fcf9e8;
+    color: #996800;
+}
+
+.md-suite-badge--bad {
+    border-color: #e8a0a3;
+    background: #fcf0f1;
+    color: #b32d2e;
+}
+
+.md-suite-badge--neutral,
+.md-suite-badge--brand {
+    border-color: #c3c4c7;
+    background: #f0f0f1;
+    color: #50575e;
+}
+
+/* Scrollable table wrapper */
+.md-suite-table-region {
+    overflow-x: auto;
+    margin-bottom: 12px;
+}
+
+.md-suite-table-region:focus {
+    outline: 2px solid #2271b1;
+    outline-offset: 1px;
+}
+
+/* Designed empty states */
+.md-suite-empty {
+    padding: 24px 8px;
+}
+
+.md-suite-empty__title {
+    margin: 0 0 4px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.md-suite-empty__message {
     margin: 0;
-    color: #23282d;
-    font-size: 18px;
+    color: #646970;
 }
 
-.maxtdesign-rbp-modal-close {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    padding: 0;
-    margin: 0;
-    background: none;
-    border: 0;
-    font-size: 24px;
-    font-weight: bold;
-    color: #666;
-    cursor: pointer;
-    line-height: 1;
+/* Inline row-action forms sit side by side inside table cells */
+.md-rbp-row-action {
+    display: inline-block;
+    margin: 0 4px 4px 0;
 }
 
-.maxtdesign-rbp-modal-close:hover,
-.maxtdesign-rbp-modal-close:focus {
-    color: #000;
+.md-rbp-actions .md-rbp-row-action {
+    vertical-align: middle;
 }
 
-.maxtdesign-rbp-modal-body {
-    padding: 20px;
-}
-
-.maxtdesign-rbp-modal-footer {
-    padding: 15px 20px;
-    background: #f9f9f9;
-    border-top: 1px solid #ddd;
-    border-radius: 0 0 4px 4px;
-    text-align: right;
-}
-
-.maxtdesign-rbp-modal-footer button {
-    margin-left: 10px;
-}
-
-.maxtdesign-rbp-readonly {
-    background-color: #f1f1f1;
-    color: #666;
-    cursor: not-allowed;
-}
-
-/* Button styling for edit actions */
-.maxtdesign-rbp-edit-global-rule {
-    background-color: #0073aa !important;
-    color: white !important;
-    border-color: #0073aa !important;
-}
-
-.maxtdesign-rbp-edit-global-rule:hover {
-    background-color: #005a87 !important;
-    border-color: #005a87 !important;
-}
-
-.maxtdesign-rbp-edit-product-rule {
-    background-color: #0073aa !important;
-    color: white !important;
-    border-color: #0073aa !important;
-    margin-right: 5px;
-}
-
-.maxtdesign-rbp-edit-product-rule:hover {
-    background-color: #005a87 !important;
-    border-color: #005a87 !important;
-}
-
-/* Responsive modal */
-@media (max-width: 768px) {
-    .maxtdesign-rbp-modal-content {
-        width: 95%;
-        margin: 10% auto;
-    }
-
-    .maxtdesign-rbp-modal-header,
-    .maxtdesign-rbp-modal-body,
-    .maxtdesign-rbp-modal-footer {
-        padding: 15px;
-    }
-
-    .maxtdesign-rbp-modal-footer button {
-        display: block;
-        width: 100%;
-        margin: 5px 0;
-    }
+/* Form polish */
+.maxtdesign-rbp-role-form .form-table,
+.maxtdesign-rbp-global-form .form-table {
+    margin-top: 0;
 }

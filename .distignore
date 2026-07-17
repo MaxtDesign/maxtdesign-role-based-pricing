@@ -60,3 +60,6 @@ vendor
 *.tmp
 *.bak
 *.swp
+
+# PHPStan-only stubs (dev-only, not shipped)
+stubs
