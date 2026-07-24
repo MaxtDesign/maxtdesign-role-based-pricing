@@ -18,6 +18,7 @@ The dedicated suite nav+UI migration (L item from both 2026-07-17 handoffs) SHIP
 2. [session] Suite-mode verification when convenient: activate any suite-core-vendoring plugin (e.g. signal) on a test site — RBP should appear under the MaxtDesign menu, styled by the suite stylesheet, and on the Overview registry.
 3. [session] At next SVN release: move listing PNGs `trunk/assets/` → SVN-root `/assets/` (~1 MB zip bloat, operator-confirmed, 2026-06-11).
 4. [operator] Pro/licensing: rule-10 `license-client` lib now exists; reconcile with the pre-lib planning in LICENSING-HANDOFF.md before any Pro build. The 1.2.0 `maxtdesign_rbp_admin_tabs` filter + `maxtdesign_rbp_render_tab_{slug}` action are the Pro tab-injection seams.
+5. [operator] Decide tier for category exclusions (2026-07 wp.org request, user-validated spec: any excluded category = absolute exclusion, margin-protection motive) — hold for the licensing-model answer; working split is free "Exempt" product-rule type (small, fills a real primitive gap: cancelling a role discount per product currently needs a drifting Set Price workaround) vs Pro category tools. Spec + comms posture in project memory (`project-category-exclusions-request`). Follow up on the wp.org thread when anything ships.
 
 ## External relationships
 - Vendored libs: **NONE — by design** (Tier-2 wp.org standalone; re-vendor/bootstrap pass N/A, verified 2026-07-17 survey).
