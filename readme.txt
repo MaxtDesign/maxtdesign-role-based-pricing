@@ -130,9 +130,24 @@ Community support is available through the WordPress.org forums.
 4. **Variable Product** - Variations with role-based pricing
 5. **Cart Page** - Cart totals reflecting role-based discounts
 
+== Security ==
+
+Found a security issue? Please report it privately to security@maxtdesign.com rather than posting
+in a public support thread. We aim to acknowledge reports within 3 business days and will agree a
+disclosure timeline with you.
+
+The full policy, including what to put in a report and what to expect back, is in SECURITY.md in
+the plugin's repository.
+
+This plugin is published on WordPress.org by the account `slaacr`, which is MaxtDesign. The account
+name predates the brand and WordPress.org does not support renaming accounts, so the two names
+differ. Anything published under `slaacr` is ours.
+
 == Changelog ==
 
 = 1.2.0 =
+* New: published security contact and vulnerability disclosure policy. Security issues now have a private reporting route (security@maxtdesign.com) instead of a public support thread, with a 3 business day acknowledgement target.
+* New: documented that the WordPress.org account `slaacr` is MaxtDesign, so it is clear who publishes this plugin.
 * **New admin home** - the settings screen moved to a cleaner, faster page. When the MaxtDesign suite is installed it appears under the MaxtDesign menu; otherwise it stays under WooCommerce. Old bookmarks redirect automatically.
 * **No more pop-up dialogs** - editing global rules now uses a normal prefilled form instead of the pop-up modal, and product-rule edits are inline fields instead of browser prompt() dialogs
 * **Product rules save with the product** - the Role-Based Pricing box on the product editor now applies its changes when you click Update, like every other product field
