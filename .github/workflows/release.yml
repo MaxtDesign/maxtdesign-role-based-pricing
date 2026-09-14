@@ -1,0 +1,154 @@
+name: Release
+
+# Builds the distributable zip on a version tag, signs a SLSA build-provenance
+# attestation for it with Sigstore, and publishes both on a GitHub Release.
+#
+# WHY THIS EXISTS
+# WordPress.org cannot tell you who published your plugin. Core shipped Ed25519
+# verification in 5.2 and has never enforced it; three attempts at ecosystem-wide
+# signing in seven years all died at adoption rather than at engineering. None of
+# that stops a single publisher making its own releases verifiable, which is all
+# this does.
+#
+# The attestation is keyless. There is no signing key in this repo, no secret to
+# rotate, nothing to leak. GitHub's OIDC identity vouches for the workflow, Fulcio
+# issues a certificate that lives for minutes, and the signed statement goes to the
+# public Rekor transparency log. What lands in the log is an identity, not a secret
+# somebody has to protect for a decade.
+#
+# WHAT IT PROVES, AND WHAT IT DOES NOT
+# It proves this exact zip was built by this workflow, from this repo, at this
+# commit. Anyone can check that without trusting us:
+#
+#   gh attestation verify <zip> --repo MaxtDesign/maxtdesign-role-based-pricing
+#
+# It does NOT cover the copy on wordpress.org. That artifact is pushed separately
+# through SVN and the directory cannot carry or check an attestation. The honest
+# claim is narrow: the GitHub Release artifact is verifiable.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to build and attest'
+        required: true
+
+permissions:
+  contents: write      # create the release
+  id-token: write      # OIDC identity for keyless signing
+  attestations: write  # record the attestation
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Derive slug and version
+        id: meta
+        env:
+          TAG_INPUT: ${{ github.event.inputs.tag }}
+        run: |
+          set -euo pipefail
+          slug="${GITHUB_REPOSITORY##*/}"
+          # Version comes from the plugin header, not from the tag, so a mistyped
+          # tag cannot produce a zip that disagrees with what WordPress reports.
+          version=$(grep -m1 -iE '^[[:space:]]*\*?[[:space:]]*Version:' "${slug}.php" | sed -E 's/.*[Vv]ersion:[[:space:]]*//' | tr -d '\r')
+          tag="${TAG_INPUT:-$GITHUB_REF_NAME}"
+          if [ "v${version}" != "$tag" ]; then
+            echo "::error::tag ${tag} does not match plugin header version ${version}"
+            exit 1
+          fi
+          echo "slug=${slug}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "zip=${slug}-${version}.zip" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+      - name: Build the distributable zip
+        env:
+          SLUG: ${{ steps.meta.outputs.slug }}
+          ZIP: ${{ steps.meta.outputs.zip }}
+        run: |
+          set -euo pipefail
+          # wp.org zips wrap the plugin in a single directory named for the slug.
+          mkdir -p "dist/${SLUG}"
+          # rsync reads .distignore directly (it skips lines starting with #), so
+          # the same file that governs the SVN build governs this one. One exclude
+          # list, not two that can drift apart.
+          rsync -a --exclude-from=.distignore --exclude='dist' --exclude='.git' ./ "dist/${SLUG}/"
+          ( cd dist && zip -qr "../${ZIP}" "${SLUG}" )
+
+      # rsync's pattern matching is not identical to the matcher wordpress.org
+      # applies to .distignore. If the two ever disagree, the zip attested here
+      # is not the zip that ships, which is worse than no attestation at all.
+      # So do not assume they agree: assert it, and fail the release if anything
+      # .distignore names literally survived into the artifact.
+      - name: Prove the zip honours .distignore
+        env:
+          ZIP: ${{ steps.meta.outputs.zip }}
+        run: |
+          set -uo pipefail
+          unzip -Z1 "$ZIP" > listing.txt
+          # Compare path SEGMENTS literally. No regex, so there is nothing to
+          # escape and nothing to get subtly wrong. An earlier version of this
+          # check built a regex with sed, emitted "&github" instead of "\.github",
+          # and silently passed a zip containing .github — which is exactly the
+          # class of bug that makes a verification step worse than none.
+          tr '/' '\n' < listing.txt | sed '/^$/d' | sort -u > segments.txt
+          fail=0
+          while IFS= read -r raw || [ -n "$raw" ]; do
+            pattern=$(printf '%s' "$raw" | tr -d '\r')
+            case "$pattern" in ''|'#'*) continue ;; esac
+            pattern="${pattern#/}"
+            pattern="${pattern%/}"
+            # Globs are the build step's job; this checks literal names, which
+            # is where a silent mismatch would actually hurt.
+            case "$pattern" in *'*'*|*'?'*|*'['*) continue ;; esac
+            if grep -Fxq -- "$pattern" segments.txt; then
+              echo "::error::.distignore lists '${pattern}' but it is inside the zip"
+              fail=1
+            fi
+          done < .distignore
+          if [ "$fail" -ne 0 ]; then
+            echo "Refusing to attest an artifact that does not match the shipped one."
+            exit 1
+          fi
+          echo "OK: no literal .distignore entry survived into ${ZIP}"
+          wc -l < listing.txt | sed 's/^/files in zip: /'
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: ${{ steps.meta.outputs.zip }}
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          ZIP: ${{ steps.meta.outputs.zip }}
+          TITLE: ${{ steps.meta.outputs.slug }} ${{ steps.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          # Notes go through a file. A multi-line string inline in a YAML block
+          # scalar has to stay indented past the block, and getting that wrong
+          # truncates the workflow silently.
+          {
+            echo "Build provenance is attested and recorded in the public Rekor transparency log."
+            echo
+            echo "Verify this artifact yourself, without trusting us:"
+            echo
+            echo '```'
+            echo "gh attestation verify ${ZIP} --repo ${GITHUB_REPOSITORY}"
+            echo '```'
+            echo
+            echo "This attestation covers the artifact attached here. The copy on WordPress.org is"
+            echo "pushed separately through SVN, and the directory cannot currently carry or check"
+            echo "an attestation."
+          } > notes.md
+          gh release create "$TAG" "$ZIP" --title "$TITLE" --notes-file notes.md \
+            || gh release upload "$TAG" "$ZIP" --clobber
