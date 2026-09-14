@@ -95,15 +95,16 @@ jobs:
           # success and left nothing where the next step looked, so pin it to one
           # absolute path that every later step also uses.
           dest="$(pwd)/${ZIP}"
-          echo "cwd=$(pwd)"
-          echo "GITHUB_WORKSPACE=${GITHUB_WORKSPACE:-unset}"
-          echo "dest=${dest}"
+          # Create the archive with a RELATIVE name from inside dist/, then move
+          # it. Handing zip an absolute destination did not work here: it warned
+          # "name not matched" on the absolute path and wrote the archive into
+          # dist/ anyway, while still exiting 0. Relative-then-move is boring and
+          # deterministic, which is what this step needs to be.
           rc=0
-          ( cd dist && zip -r "$dest" "${SLUG}" ) || rc=$?
+          ( cd dist && zip -qr "${ZIP}" "${SLUG}" ) || rc=$?
           echo "zip exit status: ${rc}"
           [ "$rc" -eq 0 ] || exit "$rc"
-          echo "zips anywhere under the workspace:"
-          find . -name '*.zip' -printf '%p %s bytes\n' 2>/dev/null || find . -name '*.zip'
+          mv "dist/${ZIP}" "${dest}"
           echo "zip_path=${dest}" >> "$GITHUB_OUTPUT"
           # zip is quiet and a missing archive here would only surface two steps
           # later as a confusing zipinfo error, so assert it landed where the
