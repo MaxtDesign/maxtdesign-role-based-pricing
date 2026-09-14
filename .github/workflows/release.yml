@@ -87,7 +87,15 @@ jobs:
             echo "::error::rsync staged nothing. .distignore probably excluded the whole tree."
             exit 1
           fi
-          ( cd dist && zip -qr "../${ZIP}" "${SLUG}" )
+          command -v zip >/dev/null || { echo "::error::zip is not installed on this runner"; exit 1; }
+          # Absolute destination, and zip's exit status captured explicitly. The
+          # previous version wrote to "../${ZIP}" from inside a subshell and
+          # produced no archive while still reporting success, which then
+          # surfaced two steps later as a bare zipinfo error.
+          rc=0
+          ( cd dist && zip -r "${GITHUB_WORKSPACE}/${ZIP}" "${SLUG}" ) || rc=$?
+          echo "zip exit status: ${rc}"
+          [ "$rc" -eq 0 ] || exit "$rc"
           # zip is quiet and a missing archive here would only surface two steps
           # later as a confusing zipinfo error, so assert it landed where the
           # rest of the job expects it.
