@@ -81,7 +81,22 @@ jobs:
           # the same file that governs the SVN build governs this one. One exclude
           # list, not two that can drift apart.
           rsync -a --exclude-from=.distignore --exclude='dist' --exclude='.git' ./ "dist/${SLUG}/"
+          staged=$(find "dist/${SLUG}" -type f | wc -l)
+          echo "staged files: ${staged}"
+          if [ "$staged" -eq 0 ]; then
+            echo "::error::rsync staged nothing. .distignore probably excluded the whole tree."
+            exit 1
+          fi
           ( cd dist && zip -qr "../${ZIP}" "${SLUG}" )
+          # zip is quiet and a missing archive here would only surface two steps
+          # later as a confusing zipinfo error, so assert it landed where the
+          # rest of the job expects it.
+          if [ ! -f "${ZIP}" ]; then
+            echo "::error::expected ${ZIP} in $(pwd) but it is not there"
+            ls -la
+            exit 1
+          fi
+          ls -l "${ZIP}"
 
       # rsync's pattern matching is not identical to the matcher wordpress.org
       # applies to .distignore. If the two ever disagree, the zip attested here
