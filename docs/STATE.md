@@ -1,5 +1,5 @@
 # STATE: maxtdesign-role-based-pricing
-Updated: 2026-07-17 by session (suite nav+UI migration shipped)
+Updated: 2026-09-13 by session (suite nav+UI migration shipped)
 
 ## Identity
 MaxtDesign Role-Based Pricing for WooCommerce. Slug `maxtdesign-role-based-pricing`, short code `rbp` (registry). Repo: `C:/maxt/projects/plugin/maxtdesign-role-based-pricing`, remote `MaxtDesign/maxtdesign-role-based-pricing` (public). Distribution: wp.org free. Current version: **1.2.0 on `main` (f335f7a), NOT yet released — wp.org live is 1.1.3** (SVN r3569410, 2026-06-11). Unreleased on main: 1.1.4 memory fix + 1.2.0 suite migration.
@@ -19,6 +19,7 @@ The dedicated suite nav+UI migration (L item from both 2026-07-17 handoffs) SHIP
 3. [session] At next SVN release: move listing PNGs `trunk/assets/` → SVN-root `/assets/` (~1 MB zip bloat, operator-confirmed, 2026-06-11).
 4. [operator] Pro/licensing: rule-10 `license-client` lib now exists; reconcile with the pre-lib planning in LICENSING-HANDOFF.md before any Pro build. The 1.2.0 `maxtdesign_rbp_admin_tabs` filter + `maxtdesign_rbp_render_tab_{slug}` action are the Pro tab-injection seams.
 5. [operator] Decide tier for category exclusions (2026-07 wp.org request, user-validated spec: any excluded category = absolute exclusion, margin-protection motive) — hold for the licensing-model answer; working split is free "Exempt" product-rule type (small, fills a real primitive gap: cancelling a role discount per product currently needs a drifting Set Price workaround) vs Pro category tools. Spec + comms posture in project memory (`project-category-exclusions-request`). Follow up on the wp.org thread when anything ships.
+6. [session] ~~Provenance and CRA baseline~~ **PARTLY DONE 2026-09-13.** `SECURITY.md` added and `readme.txt` gained a `== Security ==` section with the contact, the acknowledgement target and the note that the wp.org account `slaacr` is MaxtDesign. Changelog updated. **Still outstanding: SBOM per release.** Checklist: `C:/maxt/projects/saas/maxtdesign-provenance/docs/self-application-plan.md`.
 
 ## External relationships
 - Vendored libs: **NONE — by design** (Tier-2 wp.org standalone; re-vendor/bootstrap pass N/A, verified 2026-07-17 survey).

@@ -3,7 +3,7 @@ Contributors: slaacr
 Donate link: https://github.com/sponsors/MaxtDesign
 Tags: woocommerce, pricing, wholesale, discounts, membership
 Requires at least: 6.2
-Tested up to: 7.0
+Tested up to: 7.1
 Stable tag: 1.2.0
 Requires PHP: 7.4
 WC requires at least: 7.0
@@ -130,9 +130,25 @@ Community support is available through the WordPress.org forums.
 4. **Variable Product** - Variations with role-based pricing
 5. **Cart Page** - Cart totals reflecting role-based discounts
 
+== Security ==
+
+Found a security issue? Please report it privately to security@maxtdesign.com rather than posting
+in a public support thread. We aim to acknowledge reports within 3 business days and will agree a
+disclosure timeline with you.
+
+Please include the plugin version, steps to reproduce, and the impact as you understand it. We will
+credit you in the changelog unless you would rather stay anonymous, and we ask that you do not test
+against a site you do not own.
+
+This plugin is published on WordPress.org by the account `slaacr`, which is MaxtDesign. The account
+name predates the brand and WordPress.org does not support renaming accounts, so the two names
+differ. Anything published under `slaacr` is ours.
+
 == Changelog ==
 
 = 1.2.0 =
+* New: published security contact and vulnerability disclosure policy. Security issues now have a private reporting route (security@maxtdesign.com) instead of a public support thread, with a 3 business day acknowledgement target.
+* New: documented that the WordPress.org account `slaacr` is MaxtDesign, so it is clear who publishes this plugin.
 * **New admin home** - the settings screen moved to a cleaner, faster page. When the MaxtDesign suite is installed it appears under the MaxtDesign menu; otherwise it stays under WooCommerce. Old bookmarks redirect automatically.
 * **No more pop-up dialogs** - editing global rules now uses a normal prefilled form instead of the pop-up modal, and product-rule edits are inline fields instead of browser prompt() dialogs
 * **Product rules save with the product** - the Role-Based Pricing box on the product editor now applies its changes when you click Update, like every other product field
