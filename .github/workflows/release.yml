@@ -70,6 +70,7 @@ jobs:
           echo "tag=${tag}" >> "$GITHUB_OUTPUT"
 
       - name: Build the distributable zip
+        id: build
         env:
           SLUG: ${{ steps.meta.outputs.slug }}
           ZIP: ${{ steps.meta.outputs.zip }}
@@ -88,14 +89,22 @@ jobs:
             exit 1
           fi
           command -v zip >/dev/null || { echo "::error::zip is not installed on this runner"; exit 1; }
-          # Absolute destination, and zip's exit status captured explicitly. The
-          # previous version wrote to "../${ZIP}" from inside a subshell and
-          # produced no archive while still reporting success, which then
-          # surfaced two steps later as a bare zipinfo error.
+          # Resolve the destination BEFORE changing directory, from the step's
+          # own cwd rather than GITHUB_WORKSPACE. Earlier attempts wrote to
+          # "../${ZIP}" and then to "${GITHUB_WORKSPACE}/${ZIP}"; both reported
+          # success and left nothing where the next step looked, so pin it to one
+          # absolute path that every later step also uses.
+          dest="$(pwd)/${ZIP}"
+          echo "cwd=$(pwd)"
+          echo "GITHUB_WORKSPACE=${GITHUB_WORKSPACE:-unset}"
+          echo "dest=${dest}"
           rc=0
-          ( cd dist && zip -r "${GITHUB_WORKSPACE}/${ZIP}" "${SLUG}" ) || rc=$?
+          ( cd dist && zip -r "$dest" "${SLUG}" ) || rc=$?
           echo "zip exit status: ${rc}"
           [ "$rc" -eq 0 ] || exit "$rc"
+          echo "zips anywhere under the workspace:"
+          find . -name '*.zip' -printf '%p %s bytes\n' 2>/dev/null || find . -name '*.zip'
+          echo "zip_path=${dest}" >> "$GITHUB_OUTPUT"
           # zip is quiet and a missing archive here would only surface two steps
           # later as a confusing zipinfo error, so assert it landed where the
           # rest of the job expects it.
@@ -113,7 +122,7 @@ jobs:
       # .distignore names literally survived into the artifact.
       - name: Prove the zip honours .distignore
         env:
-          ZIP: ${{ steps.meta.outputs.zip }}
+          ZIP: ${{ steps.build.outputs.zip_path }}
         run: |
           set -uo pipefail
           unzip -Z1 "$ZIP" > listing.txt
@@ -147,13 +156,13 @@ jobs:
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v4
         with:
-          subject-path: ${{ steps.meta.outputs.zip }}
+          subject-path: ${{ steps.build.outputs.zip_path }}
 
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.meta.outputs.tag }}
-          ZIP: ${{ steps.meta.outputs.zip }}
+          ZIP: ${{ steps.build.outputs.zip_path }}
           TITLE: ${{ steps.meta.outputs.slug }} ${{ steps.meta.outputs.version }}
         run: |
           set -euo pipefail
