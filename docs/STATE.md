@@ -1,5 +1,5 @@
 # STATE: maxtdesign-role-based-pricing
-Updated: 2026-09-13 by session (suite nav+UI migration shipped)
+Updated: 2026-10-11 by session (`.distignore` `_build` line only)
 
 ## Identity
 MaxtDesign Role-Based Pricing for WooCommerce. Slug `maxtdesign-role-based-pricing`, short code `rbp` (registry). Repo: `C:/maxt/projects/plugin/maxtdesign-role-based-pricing`, remote `MaxtDesign/maxtdesign-role-based-pricing` (public). Distribution: wp.org free. Current version: **1.2.0 on `main` (f335f7a), NOT yet released — wp.org live is 1.1.3** (SVN r3569410, 2026-06-11). Unreleased on main: 1.1.4 memory fix + 1.2.0 suite migration.
@@ -31,6 +31,7 @@ The dedicated suite nav+UI migration (L item from both 2026-07-17 handoffs) SHIP
 - PHPUnit 7/7 green, PHPStan clean (baseline regenerated, net smaller), PHP lint clean — all 2026-07-17 on the 1.2.0 migration.
 - Plugin Check: clean on shipped code as of 1.1.2 (5 known dev-workspace false positives — see project memory). Re-run recommended before the 1.2.0 release.
 - Live QA: 1.1.3 verified on wp.org (zip inspected file-by-file, 2026-06-11). 1.1.4 + 1.2.0 NOT yet live-verified (operator click-through pending — Next action 1).
+- 2026-10-11: `plugin-deliverables.php` passes (15 passed, 0 failed) after `.distignore` gained a `_build` line. The release gate writes its zip, SBOM and marker to `_build/`, and the deliverables check has required the line since 2026-10-09 (agent-runbooks pull request 3). Nothing else in the plugin changed and no version bump is needed: `.distignore` does not ship. `release.yml` reads the same file through rsync, so a tag build leaves `_build/` out too.
 - Zero-footprint: frontend = one conditional CSS file; admin = one conditional CSS file on own hook_suffix only (suite-absent only); **zero admin JavaScript as of 1.2.0**.
 
 ## History
