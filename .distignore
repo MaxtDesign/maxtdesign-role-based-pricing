@@ -33,6 +33,7 @@ yarn-error.log
 # Release tooling
 tools
 svn-upload
+_build
 .distignore
 
 # Developer-facing docs (readme.txt is the shipped docs)
